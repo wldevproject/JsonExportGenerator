@@ -1,6 +1,6 @@
 # JSON Export Generator
 
-A simple JSON-to-CSV export tool built specifically for project needs.  
+A simple JSON-to-CSV/Excel export tool built specifically for project needs.  
 This generator is **customized** and may not support all JSON structures.
 
 👉 **Live Demo:**  
@@ -10,19 +10,31 @@ This generator is **customized** and may not support all JSON structures.
 
 ## ✨ Features
 
-- Converts specific JSON format to CSV
+- Converts between JSON, CSV, and Excel formats
 - Supports value-unit pairs
-- Auto-downloads the CSV file
+- Auto-downloads the converted file
+- Table preview for verification
 - Lightweight and fast — no dependencies
 
 ---
 
-## 📁 How to Use
+## 📘 How to Use
 
-1. Open the [Live Demo](https://wldevproject.github.io/JsonExportGenerator/)
-2. Paste or load your JSON data
-3. Click **Export to CSV**
-4. Download will start automatically
+### 🔄 Excel to JSON
+- Copy your table from Excel or export it as CSV
+- Paste it into the text editor
+- Click **"Convert to JSON"**
+- The table preview and JSON structure will be generated automatically
+
+### 📥 JSON to Excel
+- Upload a valid JSON file
+- Click **"Generate to Excel"**
+- The Excel file will be downloaded
+
+### ✍️ JSON Editor to Excel/CSV
+- Paste your structured JSON into the text editor
+- Click **"Preview JSON"** to visualize the data
+- Choose either **"Export to Excel"** or **"Export to CSV"**
 
 ---
 
