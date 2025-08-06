@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>JSON to Excel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  </head>
+  <body>
+    <h2>Import JSON → Export Excel</h2>
+
+    <input type="file" id="jsonFile" accept=".json" />
+    <button onclick="exportToExcel()">Export to Excel</button>
+
+    <pre id="output" style="background: #f0f0f0; padding: 1em"></pre>
+
+    <script>
+      let jsonData = [];
+
+      document
+        .getElementById("jsonFile")
+        .addEventListener("change", function (evt) {
+          const file = evt.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            try {
+              jsonData = JSON.parse(e.target.result);
+              document.getElementById("output").textContent = JSON.stringify(
+                jsonData,
+                null,
+                2
+              );
+            } catch (error) {
+              alert("Format JSON tidak valid!");
+            }
+          };
+          reader.readAsText(file);
+        });
+
+      function exportToExcel() {
+        if (!jsonData || jsonData.length === 0) {
+          alert("Belum ada data JSON yang dimuat.");
+          return;
+        }
+
+        const worksheet = XLSX.utils.json_to_sheet(jsonData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+
+        XLSX.writeFile(workbook, "exported_data.xlsx");
+      }
+    </script>
+  </body>
+</html>
