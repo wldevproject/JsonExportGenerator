@@ -6,21 +6,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JSON ⇄ Excel Tools</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <style>
     body {
       font-family: sans-serif;
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+      overflow-x: hidden;
     }
 
     nav {
       display: flex;
+      flex-wrap: wrap;
       background: #333;
       color: white;
     }
 
     nav button {
-      flex: 1;
+      flex: 1 1 100px;
       padding: 12px;
       cursor: pointer;
       background: #333;
@@ -46,6 +50,7 @@
       height: 160px;
       font-family: monospace;
       margin-bottom: 10px;
+      box-sizing: border-box;
     }
 
     button {
@@ -62,35 +67,60 @@
       font-size: 13px;
       border-radius: 6px;
       border: 1px solid #ccc;
+      overflow-x: auto;
     }
 
-    .table-wrapper {
-      max-width: 700px;
+    .table-wrapper,
+    .table-wrapper-gabung>div {
       overflow-x: auto;
-      margin-top: 20px;
-      border: 1px solid #ddd;
-      padding: 10px;
-      border-radius: 6px;
-      background-color: #fff;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .table-wrapper-gabung {
       display: flex;
-      gap: 30px;
-      overflow-x: auto;
+      flex-direction: column;
+      gap: 20px;
       margin-top: 20px;
-      border: 1px solid #ddd;
       padding: 10px;
-      border-radius: 6px;
       background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
     }
 
-    /* style="display: flex; gap: 30px; */
+    @media (min-width: 1500px) {
+      .table-wrapper-gabung {
+        flex-direction: row;
+      }
+    }
+
+    .table-wrapper-gabung>div {
+      flex: 1;
+      overflow-x: auto;
+    }
+
+    .slider-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .slider-container label {
+      flex: 1 1 auto;
+    }
+
+    .slider-container input[type="range"] {
+      flex: 1 1 300px;
+      max-width: 100%;
+    }
 
     table {
       border-collapse: collapse;
       width: 100%;
       min-width: 600px;
+      box-sizing: border-box;
     }
 
     th,
@@ -99,6 +129,7 @@
       padding: 6px;
       text-align: left;
       font-size: 13px;
+      white-space: nowrap;
     }
 
     th {
@@ -139,10 +170,19 @@
     <textarea id="excelInput" placeholder="Paste data dari Excel di sini..."></textarea>
     <br />
     <button onclick="convertToJSON()">Konversi ke JSON</button>
+    <button onclick="resetBackup()">Reset</button>
     <div id="total-table-container" class="table-wrapper"></div>
+
     <div class="table-wrapper-gabung">
       <div id="tablePreview1"></div>
-      <div id="adjustedTableContainer"></div>
+      <div>
+        <div class="slider-container">
+          <label><strong>Distribusi Persen ke Harvest:</strong> <span id="slider-harvest">50</span>%</label>
+          <label><strong>ke Import:</strong> <span id="slider-import">50</span>%</label>
+          <input type="range" min="0" max="100" value="50" oninput="onHarvestSlider(this.value)">
+        </div>
+        <div id="adjustedTableContainer"></div>
+      </div>
     </div>
 
     <details open style="margin-top: 20px">
@@ -180,6 +220,10 @@
   <script>
     // =================== UTILITIES ===================
     let latestParsedData = [];
+    let latestJSON = "";
+    let jsonData = [];
+    let parsedChartData = [];
+
     const adjustPercents = {
       harvest: 50, // default split 50/50
     }
@@ -321,13 +365,7 @@
       <thead>
         <tr>
           <th>dateTime</th>
-          <th>
-            harvest<br>
-            <input type="range" min="0" max="100" value="${adjustPercents.harvest}" 
-              style="width: 100px;" 
-              oninput="onHarvestSlider(this.value)">
-            <div><span id="slider-harvest">${adjustPercents.harvest}</span>%</div>
-          </th>
+          <th>harvest</th>
           <th>importKwh</th>
           <th>adjustedHarvest</th>
           <th>adjustedImport</th>
@@ -342,14 +380,14 @@
       data.forEach(row => {
         html += `<tr>
       <td>${row.dateTime}</td>
-      <td>${row.harvest.value.toFixed(2)}</td>
-      <td>${row.importKwh.value.toFixed(2)}</td>
-      <td>${row.adjustedHarvest.toFixed(2)}</td>
-      <td>${row.adjustedImport.toFixed(2)}</td>
-      <td>${row.exportKwh.value.toFixed(2)}</td>
-      <td>${row.energyMeterKwh.value.toFixed(2)}</td>
-      <td>${row.storeKwh.value.toFixed(2)}</td>
-      <td>${row.harvestRatio.toFixed(2)}</td>
+      <td>${customFormatNumber(row.harvest.value)}</td>
+      <td>${customFormatNumber(row.importKwh.value)}</td>
+      <td>${customFormatNumber(row.adjustedHarvest)}</td>
+      <td>${customFormatNumber(row.adjustedImport)}</td>
+      <td>${customFormatNumber(row.exportKwh.value)}</td>
+      <td>${customFormatNumber(row.energyMeterKwh.value)}</td>
+      <td>${customFormatNumber(row.storeKwh.value)}</td>
+      <td>${customFormatNumber(row.harvestRatio)}</td>
       <td>${row.harvest.unit}</td>
     </tr>`;
       });
@@ -362,11 +400,15 @@
       const val = parseInt(value);
       adjustPercents.harvest = val;
       document.getElementById("slider-harvest").textContent = val;
+      document.getElementById("slider-import").textContent = 100 - val;
       updateAdjustedTableWithSplit();
     }
+
     function updateAdjustedTableWithSplit() {
+      const result = [];
       if (!Array.isArray(latestParsedData)) return;
 
+      // const harvestPercent = parseInt(document.getElementById("slider-harvest").textContent);
       const percentHarvest = adjustPercents.harvest;
       const percentImport = 100 - percentHarvest;
 
@@ -383,11 +425,27 @@
           adjustedImport
         };
       });
-
       renderAdjustedTable(adjusted);
+
+
+      const adjustedData = latestParsedData.map(entry => {
+        const unit = entry.harvest.unit ?? "kWh";
+        const total = entry.harvest.value + entry.importKwh.value;
+
+        const adjustedHarvest = (total * percentHarvest) / 100;
+        const adjustedImport = total - adjustedHarvest;
+
+        return {
+          ...entry,
+          harvest: { value: customFormatNumber(adjustedHarvest), unit: unit },
+          importKwh: { value: customFormatNumber(adjustedImport), unit: unit },
+        };
+      });
+
+      // Update latestJSON dan tampilkan di jsonOutput
+      latestJSON = `"chart": ` + JSON.stringify(adjustedData, null, 2);
+      document.getElementById("jsonOutput").textContent = latestJSON;
     }
-
-
 
     function renderTotalTable(totals, containerId) {
       const container = document.getElementById(containerId);
@@ -443,7 +501,6 @@
     }
 
     // =================== EXCEL → JSON ===================
-    let latestJSON = "";
 
     function convertToJSON() {
       const input = document.getElementById("excelInput").value.trim();
@@ -490,13 +547,30 @@
         });
       }
 
-      latestJSON = `"chart": ` + JSON.stringify(result, null, 2);
-      document.getElementById("jsonOutput").textContent = latestJSON;
+      // latestJSON = `"chart": ` + JSON.stringify(result, null, 2);
+      // document.getElementById("jsonOutput").textContent = latestJSON;
 
       renderTotalTable(getTotals(result), 'total-table-container');
       latestParsedData = result;
       updateAdjustedTableWithSplit();
       renderTable(result, "tablePreview1");
+
+      localStorage.setItem("excelInputBackup", input); // simpan teks mentah
+      localStorage.setItem("excelJSONBackup", JSON.stringify(result)); // simpan JSON hasil parse
+    }
+
+    window.onload = function () {
+      const savedInput = localStorage.getItem("excelInputBackup");
+      if (savedInput) {
+        document.getElementById("excelInput").value = savedInput;
+        convertToJSON(); // langsung parse & render ulang
+      }
+    };
+
+    function resetBackup() {
+      localStorage.removeItem("excelInputBackup");
+      localStorage.removeItem("excelJSONBackup");
+      location.reload();
     }
 
     function clean(s) {
@@ -508,7 +582,6 @@
     }
 
     // =================== JSON FILE → EXCEL ===================
-    let jsonData = [];
 
     document.getElementById("jsonFile").addEventListener("change", function (evt) {
       const file = evt.target.files[0];
@@ -535,7 +608,6 @@
     }
 
     // =================== PASTE JSON TEXT → EXCEL / CSV ===================
-    let parsedChartData = [];
 
     function previewJSON() {
       const input = document.getElementById("jsonInput").value;
@@ -588,8 +660,6 @@
       link.click();
       document.body.removeChild(link);
     }
-
-
   </script>
 </body>
 
