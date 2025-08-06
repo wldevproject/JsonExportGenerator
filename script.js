@@ -1,3 +1,6 @@
+// Muat library Google Charts dan paket 'sankey' di awal
+google.charts.load('current', { 'packages': ['sankey'] });
+
 document.addEventListener("DOMContentLoaded", () => {
     // =================== 1. STATE MANAGEMENT ===================
     const state = {
@@ -37,9 +40,10 @@ document.addEventListener("DOMContentLoaded", () => {
         sliderImportLabelTab3: document.getElementById("slider-import-label-tab3"),
         comprehensiveTableContainerTab3: document.getElementById("comprehensiveTableContainerTab3"),
         jsonHeaderSummary: document.getElementById("json-header-summary"),
+        sankeyChartContainer: document.getElementById("sankey-chart-container"),
         copyJsonBtnTab3: document.getElementById("copyJsonBtnTab3"),
         jsonOutput2: document.getElementById("jsonOutput2"),
-        jsonModeSelectors: document.querySelectorAll('input[name="jsonModeTab3"]'),
+        jsonModeSelectors: document.querySelectorAll('input[name="jsonMode"], input[name="jsonModeTab3"]'),
     };
 
     // =================== 3. UTILITY FUNCTIONS ===================
@@ -114,29 +118,23 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     const processAdjustments = (sourceData) => {
         const percentHarvest = state.harvestSplitPercent; const percentImport = 100 - percentHarvest;
-
         state.adjustedData = sourceData.map(row => {
             const total = (row.harvest.value || 0) + (row.importKwh.value || 0);
             const adjustedHarvest = (total * percentHarvest) / 100;
             const adjustedImport = total - adjustedHarvest;
             return { ...row, adjustedHarvest, adjustedImport };
         });
-
         const finalChartData = state.adjustedData.map(row => ({
             ...row,
             harvest: { value: customFormatNumber(row.adjustedHarvest), unit: row.harvest.unit },
             importKwh: { value: customFormatNumber(row.adjustedImport), unit: row.importKwh.unit },
-            adjustedHarvest: undefined,
-            adjustedImport: undefined,
+            adjustedHarvest: undefined, adjustedImport: undefined,
         }));
-
         if (state.jsonOutputMode === 'full' && state.fullJsonData) {
             const newJsonOutput = JSON.parse(JSON.stringify(state.fullJsonData));
             const totals = getTotals(state.adjustedData);
-
             newJsonOutput.data.header.harvest.value = customFormatNumber(totals.adjustedHarvest);
             newJsonOutput.data.header.gridPln.value = customFormatNumber(totals.adjustedImport);
-
             newJsonOutput.data.chart = finalChartData;
             state.finalJsonString = JSON.stringify(newJsonOutput, null, 2);
         } else {
@@ -160,6 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const totals = getTotals(state.adjustedData);
         if (state.headerData) {
             renderHeaderSummary(state.headerData, totals);
+            renderSankeyChart(state.headerData, totals);
         }
         renderComprehensiveTable(state.adjustedData, totals, 'comprehensiveTableContainerTab3');
         elements.jsonOutput2.textContent = state.finalJsonString;
@@ -218,6 +217,41 @@ document.addEventListener("DOMContentLoaded", () => {
         summaryHtml += createSummaryItem('Excess Energy', header.excessEnergy);
         summaryHtml += `</div>`;
         container.innerHTML = summaryHtml;
+    };
+    const renderSankeyChart = (header, totals) => {
+        const container = elements.sankeyChartContainer;
+        if (!header || !totals) { container.innerHTML = ""; return; }
+
+        google.charts.setOnLoadCallback(() => {
+            const data = new google.visualization.DataTable();
+            data.addColumn('string', 'From');
+            data.addColumn('string', 'To');
+            data.addColumn('number', 'Value');
+
+            const flows = [
+                ['Harvest (Adj)', 'Total Available', customFormatNumber(totals.adjustedHarvest)],
+                ['Grid/PLN (Adj)', 'Total Available', customFormatNumber(totals.adjustedImport)],
+                ['Total Available', 'Consumed', customFormatNumber(header.enjoy.value)],
+                ['Total Available', 'Exported', customFormatNumber(header.excessEnergy.value)]
+            ];
+
+            const validFlows = flows.filter(flow => flow[2] > 0);
+            data.addRows(validFlows);
+
+            const options = {
+                height: 300,
+                sankey: {
+                    node: { colors: ['#26a69a', '#2979ff', '#f57c00', '#d32f2f', '#7b1fa2'], label: { fontName: 'Poppins', fontSize: 14 } },
+                    link: { colorMode: 'gradient', colors: ['#26a69a', '#2979ff', '#f57c00', '#d32f2f', '#7b1fa2'] }
+                }
+            };
+            container.innerHTML = '<h2>Alur Energi Disesuaikan (Sankey)</h2>';
+            const chartDiv = document.createElement('div');
+            container.appendChild(chartDiv);
+
+            const chart = new google.visualization.Sankey(chartDiv);
+            chart.draw(data, options);
+        });
     };
 
     // =================== 6. EVENT HANDLERS ===================
@@ -296,23 +330,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const handlePreviewJsonPaste = () => {
         const input = elements.jsonInput.value;
         localStorage.setItem("jsonInputBackup", input);
-
         toggleOutputVisibility('pasteJsonExport', false);
         elements.jsonHeaderSummary.innerHTML = "";
-
+        elements.sankeyChartContainer.innerHTML = "";
         try {
             if (!input.trim()) {
-                state.jsonData = [];
-                state.headerData = null;
-                state.fullJsonData = null;
+                state.jsonData = []; state.headerData = null; state.fullJsonData = null;
                 return;
             }
-
             const fullJson = JSON.parse(input);
-
             const headerData = fullJson?.data?.header;
             const chartData = fullJson?.data?.chart || (Array.isArray(fullJson) ? fullJson : []);
-
             if (!headerData) throw new Error("Objek 'header' tidak ditemukan di dalam 'data'.");
             if (!Array.isArray(chartData) || chartData.length === 0) throw new Error("Array 'chart' tidak valid atau kosong.");
 
@@ -321,12 +349,11 @@ document.addEventListener("DOMContentLoaded", () => {
             state.jsonData = chartData;
 
             renderForTab3();
+
             toggleOutputVisibility('pasteJsonExport', true);
         } catch (e) {
             showMessage("JSON tidak valid: " + e.message);
-            state.jsonData = [];
-            state.headerData = null;
-            state.fullJsonData = null;
+            state.jsonData = []; state.headerData = null; state.fullJsonData = null;
             elements.comprehensiveTableContainerTab3.innerHTML = `<p style="color:red;">JSON tidak valid</p>`;
             elements.jsonOutput2.textContent = "Error: " + e.message;
             toggleOutputVisibility('pasteJsonExport', true);
@@ -359,6 +386,7 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.jsonModeSelectors.forEach(radio => {
             radio.addEventListener('change', handleJsonModeChange);
         });
+
         const savedTabId = localStorage.getItem('activeTab');
         setActiveTab(savedTabId || 'importExcel');
 

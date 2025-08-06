@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="style.css">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Fira+Code&display=swap"
@@ -31,7 +33,6 @@
     </nav>
 
     <main class="container">
-        <!-- Tab 1 -->
         <div id="importExcel" class="tab">
             <div class="card">
                 <h2>Tempel Data Excel → Format JSON Chart</h2>
@@ -73,11 +74,9 @@
             <div class="card output-container" hidden>
                 <details open>
                     <summary><strong>Hasil JSON yang Disesuaikan</strong></summary>
-
                     <div class="json-output-mode">
                         <label><input type="radio" name="jsonMode" value="chart_only" checked> Chart Only</label>
                     </div>
-
                     <div class="copy-bar" style="text-align: right; margin-top: 10px;">
                         <button class="copy-btn" id="copyJsonBtn">Copy JSON</button>
                     </div>
@@ -86,7 +85,6 @@
             </div>
         </div>
 
-        <!-- Tab 2 -->
         <div id="jsonToExcel" class="tab">
             <div class="card">
                 <h2>Import JSON → Export Excel</h2>
@@ -110,11 +108,10 @@
             </div>
         </div>
 
-        <!-- Tab 3 -->
         <div id="pasteJsonExport" class="tab">
             <div class="card">
                 <h2>Editor & Adjuster JSON</h2>
-                <label for="excelInput" class="visually-hidden">Input Data JSON</label>
+                <label for="jsonInput" class="visually-hidden">Input Data JSON</label>
                 <textarea id="jsonInput" placeholder="Tempel JSON dari chart data di sini..."></textarea>
                 <div class="button-group">
                     <button id="previewJsonBtn" class="btn-primary">
@@ -126,6 +123,9 @@
             </div>
 
             <div class="card output-container" id="json-header-summary" hidden>
+            </div>
+
+            <div class="card output-container" id="sankey-chart-container" hidden>
             </div>
 
             <div class="card output-container" hidden>
@@ -141,12 +141,10 @@
             <div class="card output-container" hidden>
                 <details open>
                     <summary><strong>Hasil JSON yang Disesuaikan</strong></summary>
-
                     <div class="json-output-mode">
                         <label><input type="radio" name="jsonModeTab3" value="full" checked> Full JSON</label>
                         <label><input type="radio" name="jsonModeTab3" value="chart_only"> Chart Only</label>
                     </div>
-
                     <div class="copy-bar" style="text-align: right; margin-top: 10px;">
                         <button class="copy-btn" id="copyJsonBtnTab3">Copy JSON</button>
                     </div>
