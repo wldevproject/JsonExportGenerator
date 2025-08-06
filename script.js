@@ -1,6 +1,3 @@
-// Muat library Google Charts dan paket 'sankey' di awal
-google.charts.load('current', { 'packages': ['sankey'] });
-
 document.addEventListener("DOMContentLoaded", () => {
     // =================== 1. STATE MANAGEMENT ===================
     const state = {
@@ -9,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fullJsonData: null,
         jsonOutputMode: 'full',
         finalJsonString: "", jsonFromFile: [], harvestSplitPercent: 50,
+        sankeyChartInstance: null,
     };
 
     // =================== 2. DOM ELEMENT SELECTORS ===================
@@ -158,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const totals = getTotals(state.adjustedData);
         if (state.headerData) {
             renderHeaderSummary(state.headerData, totals);
-            renderSankeyChart(state.headerData, totals);
+            renderEChartsSankey(state.headerData, totals);
         }
         renderComprehensiveTable(state.adjustedData, totals, 'comprehensiveTableContainerTab3');
         elements.jsonOutput2.textContent = state.finalJsonString;
@@ -218,40 +216,83 @@ document.addEventListener("DOMContentLoaded", () => {
         summaryHtml += `</div>`;
         container.innerHTML = summaryHtml;
     };
-    const renderSankeyChart = (header, totals) => {
+    const renderEChartsSankey = (header, totals) => {
         const container = elements.sankeyChartContainer;
-        if (!header || !totals) { container.innerHTML = ""; return; }
+        if (!header || !totals) {
+            container.innerHTML = "";
+            return;
+        }
 
-        google.charts.setOnLoadCallback(() => {
-            const data = new google.visualization.DataTable();
-            data.addColumn('string', 'From');
-            data.addColumn('string', 'To');
-            data.addColumn('number', 'Value');
+        // Cek apakah library ECharts sudah siap.
+        if (typeof echarts === 'undefined') {
+            container.innerHTML = '<h2>Menunggu library ECharts...</h2>';
+            setTimeout(() => renderEChartsSankey(header, totals), 200);
+            return;
+        }
 
-            const flows = [
-                ['Harvest (Adj)', 'Total Available', customFormatNumber(totals.adjustedHarvest)],
-                ['Grid/PLN (Adj)', 'Total Available', customFormatNumber(totals.adjustedImport)],
-                ['Total Available', 'Consumed', customFormatNumber(header.enjoy.value)],
-                ['Total Available', 'Exported', customFormatNumber(header.excessEnergy.value)]
-            ];
+        // Inisialisasi ECharts jika belum ada, atau gunakan yang sudah ada
+        if (!state.sankeyChartInstance || state.sankeyChartInstance.isDisposed()) {
+            state.sankeyChartInstance = echarts.init(container);
+        }
 
-            const validFlows = flows.filter(flow => flow[2] > 0);
-            data.addRows(validFlows);
+        // ================== PERBAIKAN UTAMA DI SINI ==================
 
-            const options = {
-                height: 300,
-                sankey: {
-                    node: { colors: ['#26a69a', '#2979ff', '#f57c00', '#d32f2f', '#7b1fa2'], label: { fontName: 'Poppins', fontSize: 14 } },
-                    link: { colorMode: 'gradient', colors: ['#26a69a', '#2979ff', '#f57c00', '#d32f2f', '#7b1fa2'] }
-                }
-            };
-            container.innerHTML = '<h2>Alur Energi Disesuaikan (Sankey)</h2>';
-            const chartDiv = document.createElement('div');
-            container.appendChild(chartDiv);
+        // 1. Definisikan peta warna yang konsisten
+        const colorMap = {
+            'Harvest (Adj)': '#26a69a',     // Hijau Toska
+            'Grid/PLN (Adj)': '#f57c00',    // Oranye
+            'Total Available': '#2979ff',  // Biru
+            'Consumed': '#d32f2f',         // Merah
+            'Exported': '#7b1fa2'          // Ungu
+        };
 
-            const chart = new google.visualization.Sankey(chartDiv);
-            chart.draw(data, options);
-        });
+        // 2. Definisikan Nodes dengan gaya warna yang terkunci
+        const nodes = [
+            { name: 'Harvest (Adj)', itemStyle: { color: colorMap['Harvest (Adj)'] } },
+            { name: 'Grid/PLN (Adj)', itemStyle: { color: colorMap['Grid/PLN (Adj)'] } },
+            { name: 'Total Available', itemStyle: { color: colorMap['Total Available'] } },
+            { name: 'Consumed', itemStyle: { color: colorMap['Consumed'] } },
+            { name: 'Exported', itemStyle: { color: colorMap['Exported'] } }
+        ];
+
+        // 3. Definisikan Links (Alur)
+        const links = [
+            { source: 'Harvest (Adj)', target: 'Total Available', value: totals.adjustedHarvest },
+            { source: 'Grid/PLN (Adj)', target: 'Total Available', value: totals.adjustedImport },
+            { source: 'Total Available', target: 'Consumed', value: header.enjoy.value },
+            { source: 'Total Available', target: 'Exported', value: header.excessEnergy.value }
+        ];
+
+        // ================== AKHIR DARI PERBAIKAN ==================
+
+        const validLinks = links.filter(link => link.value > 0.001);
+        const validNodeNames = new Set(validLinks.flatMap(link => [link.source, link.target]));
+        const validNodes = nodes.filter(node => validNodeNames.has(node.name));
+
+        const option = {
+            title: {
+                text: 'Alur Energi Disesuaikan (Sankey)',
+                textStyle: { fontFamily: 'Poppins', fontWeight: '600' }
+            },
+            tooltip: {
+                trigger: 'item',
+                triggerOn: 'mousemove'
+            },
+            series: [{
+                type: 'sankey',
+                emphasis: { focus: 'adjacency' },
+                nodeAlign: 'justify',
+                data: validNodes,
+                links: validLinks,
+                lineStyle: {
+                    color: 'source', // Warna alur akan mengikuti warna sumbernya
+                    curveness: 0.5
+                },
+                label: { fontFamily: 'Poppins' }
+            }]
+        };
+
+        state.sankeyChartInstance.setOption(option, true);
     };
 
     // =================== 6. EVENT HANDLERS ===================
@@ -330,9 +371,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const handlePreviewJsonPaste = () => {
         const input = elements.jsonInput.value;
         localStorage.setItem("jsonInputBackup", input);
+
         toggleOutputVisibility('pasteJsonExport', false);
         elements.jsonHeaderSummary.innerHTML = "";
+        if (state.sankeyChartInstance) {
+            state.sankeyChartInstance.dispose();
+            state.sankeyChartInstance = null;
+        }
         elements.sankeyChartContainer.innerHTML = "";
+
         try {
             if (!input.trim()) {
                 state.jsonData = []; state.headerData = null; state.fullJsonData = null;
@@ -348,9 +395,13 @@ document.addEventListener("DOMContentLoaded", () => {
             state.headerData = headerData;
             state.jsonData = chartData;
 
+            // PERUBAHAN KUNCI DI SINI:
+            // 1. Tampilkan dulu semua kontainer output.
+            toggleOutputVisibility('pasteJsonExport', true);
+
+            // 2. Baru panggil fungsi untuk merender isinya.
             renderForTab3();
 
-            toggleOutputVisibility('pasteJsonExport', true);
         } catch (e) {
             showMessage("JSON tidak valid: " + e.message);
             state.jsonData = []; state.headerData = null; state.fullJsonData = null;
@@ -385,6 +436,12 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.resetBtn.addEventListener('click', handleReset);
         elements.jsonModeSelectors.forEach(radio => {
             radio.addEventListener('change', handleJsonModeChange);
+        });
+
+        window.addEventListener('resize', () => {
+            if (state.sankeyChartInstance && !state.sankeyChartInstance.isDisposed()) {
+                state.sankeyChartInstance.resize();
+            }
         });
 
         const savedTabId = localStorage.getItem('activeTab');

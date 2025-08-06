@@ -347,6 +347,10 @@ input[type="range"]::-webkit-slider-thumb {
     cursor: pointer;
 }
 
+#sankey-chart-container {
+    min-height: 350px;
+}
+
 
 @media (max-width: 768px) {
     nav {
