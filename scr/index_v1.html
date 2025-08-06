@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JSON ⇄ Excel Tools</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      background: #333;
+      color: white;
+    }
+
+    nav button {
+      flex: 1 1 100px;
+      padding: 12px;
+      cursor: pointer;
+      background: #333;
+      border: none;
+      color: white;
+    }
+
+    nav button.active {
+      background: #555;
+    }
+
+    .tab {
+      display: none;
+      padding: 20px;
+    }
+
+    .tab.active {
+      display: block;
+    }
+
+    textarea {
+      width: 100%;
+      height: 160px;
+      font-family: monospace;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 6px 12px;
+      margin: 2px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    pre {
+      background: #f5f5f5;
+      padding: 10px;
+      white-space: pre-wrap;
+      font-size: 13px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      overflow-x: auto;
+    }
+
+    .table-wrapper,
+    .table-wrapper-gabung>div {
+      overflow-x: auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .table-wrapper-gabung {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+
+    @media (min-width: 1500px) {
+      .table-wrapper-gabung {
+        flex-direction: row;
+      }
+    }
+
+    .table-wrapper-gabung>div {
+      flex: 1;
+      overflow-x: auto;
+    }
+
+    .slider-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .slider-container label {
+      flex: 1 1 auto;
+    }
+
+    .slider-container input[type="range"] {
+      flex: 1 1 300px;
+      max-width: 100%;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 600px;
+      box-sizing: border-box;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: left;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    th {
+      background-color: #f0f0f0;
+      position: relative;
+    }
+
+    .copy-btn {
+      background-color: #e0e0e0;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 6px;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover {
+      background-color: #ccc;
+    }
+
+    .copy-bar {
+      margin-bottom: 5px;
+      text-align: right;
+    }
+  </style>
+</head>
+
+<body>
+  <nav>
+    <button onclick="showTab('importExcel', this)" class="active">
+      Excel → JSON
+    </button>
+    <button onclick="showTab('jsonToExcel', this)">JSON → Excel</button>
+    <button onclick="showTab('pasteJsonExport', this)">Editor JSON → Excel</button>
+  </nav>
+
+  <div id="importExcel" class="tab active">
+    <h2>Tempel Data Excel → Format JSON Chart</h2>
+    <textarea id="excelInput" placeholder="Paste data dari Excel di sini..."></textarea>
+    <br />
+    <button onclick="convertToJSON()">Konversi ke JSON</button>
+    <button onclick="resetBackup()">Reset</button>
+    <div id="total-table-container" class="table-wrapper"></div>
+
+    <div class="table-wrapper-gabung">
+      <div id="tablePreview1"></div>
+      <div>
+        <div class="slider-container">
+          <label><strong>Distribusi Persen ke Harvest:</strong> <span id="slider-harvest">50</span>%</label>
+          <label><strong>ke Import:</strong> <span id="slider-import">50</span>%</label>
+          <input type="range" min="0" max="100" value="50" oninput="onHarvestSlider(this.value)">
+        </div>
+        <div id="adjustedTableContainer"></div>
+      </div>
+    </div>
+
+    <details open style="margin-top: 20px">
+      <summary><strong>Lihat Hasil JSON</strong></summary>
+      <div class="copy-bar">
+        <button class="copy-btn" onclick="copyJSON()">
+          Copy JSON Lengkap
+        </button>
+      </div>
+      <pre id="jsonOutput"></pre>
+    </details>
+  </div>
+
+  <div id="jsonToExcel" class="tab">
+    <h2>Import JSON → Export Excel</h2>
+    <input type="file" id="jsonFile" accept=".json" />
+    <button onclick="exportToExcel()">Export to Excel</button>
+    <pre id="output" style="background: #f0f0f0; padding: 1em"></pre>
+  </div>
+
+  <div id="pasteJsonExport" class="tab">
+    <h2>Editor JSON → Export Data Chart ke Excel</h2>
+    <textarea id="jsonInput" placeholder="Tempel JSON kamu di sini..."></textarea>
+    <br />
+    <button onclick="previewJSON()">Preview JSON</button>
+    <button onclick="exportJSONToExcel()">Export ke Excel</button>
+    <button onclick="exportJSONToCSV()">Export to CSV</button>
+    <div id="tablePreview2" class="table-wrapper"></div>
+    <details style="margin-top: 20px">
+      <summary><strong>Lihat Preview JSON</strong></summary>
+      <pre id="jsonOutput2"></pre>
+    </details>
+  </div>
+
+  <script>
+    // =================== UTILITIES ===================
+    let latestParsedData = [];
+    let latestJSON = "";
+    let jsonData = [];
+    let parsedChartData = [];
+
+    const adjustPercents = {
+      harvest: 50, // default split 50/50
+    }
+
+    function parseNumber(str, fallback = 0) {
+      if (!str) return fallback;
+      return parseFloat(str.replace(",", ".")) || fallback;
+    }
+
+    function showMessage(msg) {
+      const div = document.createElement("div");
+      div.textContent = msg;
+      Object.assign(div.style, {
+        position: "fixed",
+        bottom: "10px",
+        right: "10px",
+        padding: "8px 12px",
+        background: "#333",
+        color: "#fff",
+        borderRadius: "6px",
+        zIndex: 1000
+      });
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 2000);
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => showMessage("Tersalin!"));
+    }
+
+    // =================== TAB HANDLER ===================
+    function showTab(tabId) {
+      document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+      document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      if (el) el.classList.add("active");
+    }
+
+    // =================== TABLE RENDERING ===================
+    function renderTable(data, containerId) {
+      const container = document.getElementById(containerId);
+      if (!data.length) {
+        container.innerHTML = "<p>Data kosong</p>";
+        return;
+      }
+
+      const headers = [
+        "dateTime", "harvest", "importKwh", "exportKwh",
+        "energyMeterKwh", "storeKwh", "harvestRatio", "unit"
+      ];
+
+      const totals = getTotals(data);
+
+      let tableHtml = `
+  <div class="copy-bar">
+    <button class="copy-btn" onclick="copyTable('${containerId}')">Copy Semua</button>
+  </div>
+
+<div style="margin-bottom: 10px; font-weight: bold;">
+  Total: 
+  Harvest = ${customFormatNumber(totals.harvest)}, 
+  Import = ${customFormatNumber(totals.importKwh)}, 
+  Export = ${customFormatNumber(totals.exportKwh)}, 
+  EnergyMeter = ${customFormatNumber(totals.energyMeterKwh)}, 
+  Store = ${customFormatNumber(totals.storeKwh)}, 
+</div>
+
+  <table><thead><tr>`;
+
+      headers.forEach((h, i) => {
+        tableHtml += `<th>${h}<br><button class="copy-btn" onclick="copyColumn(${i}, '${containerId}')">Copy Kolom</button></th>`;
+      });
+
+      tableHtml += `</tr></thead><tbody>`;
+
+      data.forEach(row => {
+        tableHtml += `<tr>
+      <td>${row.dateTime}</td>
+      <td>${row.harvest?.value ?? 0}</td>
+      <td>${row.importKwh?.value ?? 0}</td>
+      <td>${row.exportKwh?.value ?? 0}</td>
+      <td>${row.energyMeterKwh?.value ?? 0}</td>
+      <td>${row.storeKwh?.value ?? 0}</td>
+      <td>${row.harvestRatio ?? 0}</td>
+      <td>${row.harvest?.unit ?? 'kWh'}</td>
+    </tr>`;
+      });
+
+      tableHtml += "</tbody></table>";
+      container.innerHTML = tableHtml;
+    }
+
+    function customFormatNumber(n) {
+      const num = Number(n);
+      const intPart = Math.floor(num);
+      const intLength = intPart.toString().length;
+
+      if (num % 1 === 0) {
+        return intPart;
+      }
+
+      if (intLength === 1) {
+        return parseFloat(num.toFixed(2)); // x.xx
+      } else if (intLength === 2) {
+        return parseFloat(num.toFixed(1)); // xx.x
+      } else {
+        return intPart; // xxx
+      }
+    }
+
+    function getTotals(data) {
+      const totals = {
+        harvest: 0,
+        importKwh: 0,
+        exportKwh: 0,
+        energyMeterKwh: 0,
+        storeKwh: 0,
+        harvestRatio: 0
+      };
+
+      data.forEach(row => {
+        totals.harvest += parseFloat(row.harvest?.value ?? 0);
+        totals.importKwh += parseFloat(row.importKwh?.value ?? 0);
+        totals.exportKwh += parseFloat(row.exportKwh?.value ?? 0);
+        totals.energyMeterKwh += parseFloat(row.energyMeterKwh?.value ?? 0);
+        totals.storeKwh += parseFloat(row.storeKwh?.value ?? 0);
+        totals.harvestRatio += parseFloat(row.harvestRatio ?? 0);
+      });
+
+      return totals;
+    }
+
+    function renderAdjustedTable(data) {
+      const container = document.getElementById("adjustedTableContainer");
+
+      let html = `
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>dateTime</th>
+          <th>harvest</th>
+          <th>importKwh</th>
+          <th>adjustedHarvest</th>
+          <th>adjustedImport</th>
+          <th>exportKwh</th>
+          <th>energyMeterKwh</th>
+          <th>storeKwh</th>
+          <th>harvestRatio</th>
+          <th>unit</th>
+        </tr>
+      </thead><tbody>`;
+
+      data.forEach(row => {
+        html += `<tr>
+      <td>${row.dateTime}</td>
+      <td>${customFormatNumber(row.harvest.value)}</td>
+      <td>${customFormatNumber(row.importKwh.value)}</td>
+      <td>${customFormatNumber(row.adjustedHarvest)}</td>
+      <td>${customFormatNumber(row.adjustedImport)}</td>
+      <td>${customFormatNumber(row.exportKwh.value)}</td>
+      <td>${customFormatNumber(row.energyMeterKwh.value)}</td>
+      <td>${customFormatNumber(row.storeKwh.value)}</td>
+      <td>${customFormatNumber(row.harvestRatio)}</td>
+      <td>${row.harvest.unit}</td>
+    </tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    }
+
+    function onHarvestSlider(value) {
+      const val = parseInt(value);
+      adjustPercents.harvest = val;
+      document.getElementById("slider-harvest").textContent = val;
+      document.getElementById("slider-import").textContent = 100 - val;
+      updateAdjustedTableWithSplit();
+    }
+
+    function updateAdjustedTableWithSplit() {
+      const result = [];
+      if (!Array.isArray(latestParsedData)) return;
+
+      // const harvestPercent = parseInt(document.getElementById("slider-harvest").textContent);
+      const percentHarvest = adjustPercents.harvest;
+      const percentImport = 100 - percentHarvest;
+
+      const adjusted = latestParsedData.map(row => {
+        const unit = row.harvest.unit ?? "kWh";
+        const total = row.harvest.value + row.importKwh.value;
+
+        const adjustedHarvest = (total * percentHarvest) / 100;
+        const adjustedImport = total - adjustedHarvest;
+
+        return {
+          ...row,
+          adjustedHarvest,
+          adjustedImport
+        };
+      });
+      renderAdjustedTable(adjusted);
+
+
+      const adjustedData = latestParsedData.map(entry => {
+        const unit = entry.harvest.unit ?? "kWh";
+        const total = entry.harvest.value + entry.importKwh.value;
+
+        const adjustedHarvest = (total * percentHarvest) / 100;
+        const adjustedImport = total - adjustedHarvest;
+
+        return {
+          ...entry,
+          harvest: { value: customFormatNumber(adjustedHarvest), unit: unit },
+          importKwh: { value: customFormatNumber(adjustedImport), unit: unit },
+        };
+      });
+
+      // Update latestJSON dan tampilkan di jsonOutput
+      latestJSON = `"chart": ` + JSON.stringify(adjustedData, null, 2);
+      document.getElementById("jsonOutput").textContent = latestJSON;
+    }
+
+    function renderTotalTable(totals, containerId) {
+      const container = document.getElementById(containerId);
+
+      const html = `
+    <table border="1">
+      <thead><tr><th colspan="2">Total</th></tr></thead>
+      <tbody>
+        <tr><td>Harvest</td><td>${customFormatNumber(totals.harvest)}</td></tr>
+        <tr><td>Import</td><td>${customFormatNumber(totals.importKwh)}</td></tr>
+        <tr><td>Export</td><td>${customFormatNumber(totals.exportKwh)}</td></tr>
+        <tr><td>EnergyMeter</td><td>${customFormatNumber(totals.energyMeterKwh)}</td></tr>
+        <tr><td>Store</td><td>${customFormatNumber(totals.storeKwh)}</td></tr>
+        <tr><td>Ratio</td><td>${customFormatNumber(totals.harvestRatio)}</td></tr>
+      </tbody>
+    </table>
+  `;
+
+      container.innerHTML = html;
+    }
+
+    function copyTable(containerId) {
+      const table = document.querySelector(`#${containerId} table`);
+      if (!table) return;
+
+      const getCellText = (cell) => {
+        return Array.from(cell.childNodes)
+          .filter(node => node.nodeType === Node.TEXT_NODE)
+          .map(node => node.textContent.trim())
+          .join(" ");
+      };
+
+      let text = Array.from(table.rows)
+        .map(row =>
+          Array.from(row.cells)
+            .map(cell => getCellText(cell))
+            .join("\t")
+        )
+        .join("\n");
+
+      copyToClipboard(text);
+    }
+
+
+    function copyColumn(index, containerId) {
+      const table = document.querySelector(`#${containerId} table`);
+      if (!table) return;
+      let text = Array.from(table.rows)
+        .slice(1) // skip header
+        .map(row => row.cells[index]?.innerText ?? "")
+        .join("\n");
+      copyToClipboard(text);
+    }
+
+    // =================== DATA FLATTENER ===================
+    function getFlattenedChart(data) {
+      return data.map((item) => ({
+        dateTime: item.dateTime ?? "",
+        harvest: item.harvest?.value ?? 0,
+        importKwh: item.importKwh?.value ?? 0,
+        exportKwh: item.exportKwh?.value ?? 0,
+        energyMeterKwh: item.energyMeterKwh?.value ?? 0,
+        storeKwh: item.storeKwh?.value ?? 0,
+        harvestRatio: item.harvestRatio ?? 0,
+        unit: item.harvest?.unit ?? "kWh"
+      }));
+    }
+
+    // =================== EXCEL → JSON ===================
+
+    function convertToJSON() {
+      const input = document.getElementById("excelInput").value.trim();
+      if (!input) return showMessage("Data kosong!");
+
+      const isCSV = input.includes(";") && !input.includes("\t");
+      const lines = input.split(/\r?\n/).filter((line) => line.trim());
+
+      const data = lines.map(line =>
+        isCSV ? line.split(";").map((s) => s.trim()) : line.split("\t").map((s) => s.trim())
+      );
+
+      const headers = data.shift();
+      const result = [];
+
+      for (const row of data) {
+        if (row.length < 8) continue;
+
+        const [
+          dateTimeRaw, harvestRaw, importKwhRaw, exportKwhRaw,
+          energyMeterKwhRaw, storeKwhRaw, harvestRatioRaw, unitRaw
+        ] = row;
+
+        const dateTime = clean(dateTimeRaw);
+        const unit = unitRaw?.replace(/^"|"$/g, "");
+
+        const h = parseNumber(harvestRaw);
+        const imp = parseNumber(importKwhRaw);
+        const exp = parseNumber(exportKwhRaw);
+        const enjoy = parseNumber(energyMeterKwhRaw);
+        const store = parseNumber(storeKwhRaw);
+        const hr = parseNumber(harvestRatioRaw);
+
+        if (!dateTime || isNaN(h) || isNaN(imp)) continue;
+
+        result.push({
+          dateTime,
+          harvest: { value: h, unit },
+          harvestRatio: hr,
+          importKwh: { value: imp, unit },
+          exportKwh: { value: exp, unit },
+          energyMeterKwh: { value: enjoy, unit },
+          storeKwh: { value: store, unit },
+        });
+      }
+
+      // latestJSON = `"chart": ` + JSON.stringify(result, null, 2);
+      // document.getElementById("jsonOutput").textContent = latestJSON;
+
+      renderTotalTable(getTotals(result), 'total-table-container');
+      latestParsedData = result;
+      updateAdjustedTableWithSplit();
+      renderTable(result, "tablePreview1");
+
+      localStorage.setItem("excelInputBackup", input); // simpan teks mentah
+      localStorage.setItem("excelJSONBackup", JSON.stringify(result)); // simpan JSON hasil parse
+    }
+
+    window.onload = function () {
+      const savedInput = localStorage.getItem("excelInputBackup");
+      if (savedInput) {
+        document.getElementById("excelInput").value = savedInput;
+        convertToJSON(); // langsung parse & render ulang
+      }
+    };
+
+    function resetBackup() {
+      localStorage.removeItem("excelInputBackup");
+      localStorage.removeItem("excelJSONBackup");
+      location.reload();
+    }
+
+    function clean(s) {
+      return (s ?? "").replace(/^"|"$/g, "").trim();
+    }
+
+    function copyJSON() {
+      if (latestJSON) copyToClipboard(latestJSON);
+    }
+
+    // =================== JSON FILE → EXCEL ===================
+
+    document.getElementById("jsonFile").addEventListener("change", function (evt) {
+      const file = evt.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          jsonData = JSON.parse(e.target.result);
+          document.getElementById("output").textContent = JSON.stringify(jsonData, null, 2);
+        } catch (error) {
+          showMessage("Format JSON tidak valid!");
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    function exportToExcel() {
+      if (!jsonData || jsonData.length === 0)
+        return showMessage("Belum ada data JSON yang dimuat.");
+      const worksheet = XLSX.utils.json_to_sheet(jsonData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+      XLSX.writeFile(workbook, "exported_data.xlsx");
+    }
+
+    // =================== PASTE JSON TEXT → EXCEL / CSV ===================
+
+    function previewJSON() {
+      const input = document.getElementById("jsonInput").value;
+      try {
+        const fullJson = JSON.parse(input);
+        parsedChartData =
+          fullJson?.data?.chart || fullJson?.chart || (Array.isArray(fullJson) ? fullJson : []);
+        if (!Array.isArray(parsedChartData)) throw new Error("chart bukan array");
+
+        document.getElementById("jsonOutput2").textContent = JSON.stringify(parsedChartData, null, 2);
+
+        renderTotalTable(getTotals(parsedChartData), 'total-table-container');
+        renderTable(parsedChartData, "tablePreview2");
+
+      } catch (e) {
+        showMessage("Format JSON tidak valid atau struktur tidak sesuai: " + e.message);
+      }
+    }
+
+    function exportJSONToExcel() {
+      if (!parsedChartData.length) return showMessage("Data chart kosong.");
+      const flattened = getFlattenedChart(parsedChartData);
+      const worksheet = XLSX.utils.json_to_sheet(flattened);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "ChartData");
+      XLSX.writeFile(workbook, "chart_data.xlsx");
+    }
+
+    function exportJSONToCSV() {
+      if (!parsedChartData.length) return showMessage("Data chart kosong.");
+
+      const rows = getFlattenedChart(parsedChartData);
+      const headers = Object.keys(rows[0]);
+
+      const csvRows = [
+        headers.join(";"),
+        ...rows.map((row) =>
+          headers.map((field) => {
+            const val = row[field];
+            return typeof val === "number" ? val.toString().replace(".", ",") : `"${val}"`;
+          }).join(";")
+        )
+      ];
+
+      const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "chart_data.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+
+</html>

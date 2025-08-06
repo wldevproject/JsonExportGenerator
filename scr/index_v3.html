@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Harvest Adjustment Tools</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Fira+Code&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-body: #f4f7f9;
+            --bg-card: #ffffff;
+            --text-primary: #333745;
+            --text-secondary: #7a7e8a;
+            --border-color: #e1e5ee;
+            --accent-color: #26a69a;
+            --accent-color-dark: #00796b;
+            --danger-color: #e53935;
+            --danger-color-light: #ffcdd2;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --font-sans: 'Poppins', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            --border-radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        nav {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        #nav-links {
+            display: flex;
+        }
+
+        #nav-links button {
+            flex: 0 1 auto;
+            padding: 16px 20px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text-secondary);
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.2s, border-color 0.2s;
+            margin-bottom: -1px;
+        }
+
+        #nav-links button:hover {
+            color: var(--text-primary);
+        }
+
+        #nav-links button.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
+
+        #burger-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .tab {
+            display: none;
+        }
+
+        .tab.active {
+            display: block;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-top: 24px;
+        }
+
+        h2 {
+            font-weight: 600;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        textarea,
+        input[type="text"] {
+            width: 100%;
+            font-family: var(--font-mono);
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: #fbfdff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        textarea:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(38, 166, 154, 0.2);
+        }
+
+        textarea {
+            height: 160px;
+            margin-bottom: 16px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: var(--font-sans);
+            cursor: pointer;
+            border-radius: var(--border-radius);
+            border: 1px solid transparent;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-color-dark);
+        }
+
+        .btn-secondary {
+            background-color: #e8eaed;
+            color: var(--text-primary);
+            border-color: #e8eaed;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d8dbdf;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color-light);
+            color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #ef9a9a;
+        }
+
+        input[type="file"] {
+            font-family: var(--font-sans);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 800px;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 13px;
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: #fbfdff;
+        }
+
+        .copy-btn {
+            background-color: #f1f3f5;
+            color: var(--text-secondary);
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: #e9ecef;
+        }
+
+        pre {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 15px;
+            font-size: 14px;
+            border-radius: var(--border-radius);
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        details {
+            margin-top: 24px;
+        }
+
+        summary {
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .table-wrapper-gabung {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .table-wrapper-gabung>div {
+            flex: 1;
+        }
+
+        .slider-container {
+            padding: 16px;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            outline: none;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                justify-content: space-between;
+                position: sticky;
+            }
+
+            #burger-menu-btn {
+                display: block;
+            }
+
+            #nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background-color: var(--bg-card);
+                flex-direction: column;
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            #nav-links.open {
+                display: flex;
+            }
+
+            #nav-links button {
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            #nav-links button.active {
+                border-left: 3px solid var(--accent-color);
+                border-bottom-color: var(--border-color);
+            }
+
+            .container {
+                padding: 16px;
+            }
+
+            .table-wrapper-gabung {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav id="nav-tabs">
+        <button id="burger-menu-btn" aria-label="Buka Menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                    d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z" />
+            </svg>
+        </button>
+        <div id="nav-links">
+            <button data-tab="importExcel" class="active">Excel → JSON</button>
+            <button data-tab="jsonToExcel">JSON → Excel</button>
+            <button data-tab="pasteJsonExport">Editor JSON → Excel</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div id="importExcel" class="tab active">
+            <div class="card">
+                <h2>Tempel Data Excel → Format JSON Chart</h2>
+                <textarea id="excelInput" placeholder="Paste data dari Excel di sini..."></textarea>
+                <div class="button-group">
+                    <button id="convertToJsonBtn" class="btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            viewBox="0 0 16 16">
+                            <path
+                                d="M5 11.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5M1.625 2.158a.5.5 0 0 1 .375-.158h11.5a.5.5 0 0 1 .5.5v11.5a.5.5 0 0 1-.5.5h-11.5a.5.5 0 0 1-.5-.5V2.5a.5.5 0 0 1 .125-.342zM2 2.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5V13l-5-5V2.5z" />
+                        </svg>
+                        Konversi ke JSON
+                    </button>
+                    <button id="resetBtn" class="btn-danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            viewBox="0 0 16 16">
+                            <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z" />
+                            <path
+                                d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
+                        </svg>
+                        Reset
+                    </button>
+                </div>
+            </div>
+            <div class="table-wrapper-gabung">
+                <div class="card" id="total-table-container"></div>
+                <div class="card" id="tablePreview1"></div>
+            </div>
+            <div class="card">
+                <div class="slider-container">
+                    <label><strong>Distribusi Persen ke Harvest:</strong> <span
+                            id="slider-harvest-label">50</span>%</label>
+                    <label><strong>ke Import:</strong> <span id="slider-import-label">50</span>%</label>
+                    <input type="range" min="0" max="100" value="50" id="harvestSlider">
+                </div>
+                <div class="table-wrapper" id="adjustedTableContainer"></div>
+            </div>
+            <div class="card">
+                <details open>
+                    <summary><strong>Hasil JSON yang Disesuaikan</strong></summary>
+                    <div class="copy-bar" style="text-align: right; margin-top: 10px;">
+                        <button class="copy-btn" id="copyJsonBtn">Copy JSON</button>
+                    </div>
+                    <pre id="jsonOutput"></pre>
+                </details>
+            </div>
+        </div>
+        <div id="jsonToExcel" class="tab">
+            <div class="card">
+                <h2>Import JSON → Export Excel</h2>
+                <div class="button-group">
+                    <input type="file" id="jsonFileInput" accept=".json" />
+                    <button id="exportToExcelBtn" class="btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            viewBox="0 0 16 16">
+                            <path
+                                d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+                            <path
+                                d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z" />
+                        </svg>
+                        Export to Excel
+                    </button>
+                </div>
+                <details open style="margin-top: 20px;">
+                    <summary><strong>Preview File JSON</strong></summary>
+                    <pre id="jsonFilePreview"></pre>
+                </details>
+            </div>
+        </div>
+        <div id="pasteJsonExport" class="tab">
+            <div class="card">
+                <h2>Editor JSON → Export Data Chart ke Excel</h2>
+                <textarea id="jsonInput" placeholder="Tempel JSON kamu di sini..."></textarea>
+                <div class="button-group">
+                    <button id="previewJsonBtn" class="btn-secondary">Preview JSON</button>
+                    <button id="exportJsonToExcelBtn" class="btn-primary">Export ke Excel</button>
+                    <button id="exportJsonToCsvBtn" class="btn-primary">Export ke CSV</button>
+                </div>
+            </div>
+            <div class="card table-wrapper" id="tablePreview2"></div>
+            <div class="card">
+                <details>
+                    <summary><strong>Lihat Preview JSON</strong></summary>
+                    <pre id="jsonOutput2"></pre>
+                </details>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // =================== 1. STATE MANAGEMENT ===================
+            const state = {
+                originalData: [], adjustedData: [], finalJsonString: "",
+                jsonFromFile: [], jsonFromPaste: [], harvestSplitPercent: 50,
+            };
+
+            // =================== 2. DOM ELEMENT SELECTORS ===================
+            const elements = {
+                navTabs: document.getElementById("nav-tabs"),
+                burgerMenuBtn: document.getElementById("burger-menu-btn"),
+                navLinks: document.getElementById("nav-links"),
+                tabs: document.querySelectorAll(".tab"),
+                excelInput: document.getElementById("excelInput"),
+                convertToJsonBtn: document.getElementById("convertToJsonBtn"),
+                resetBtn: document.getElementById("resetBtn"),
+                totalTableContainer: document.getElementById("total-table-container"),
+                tablePreview1: document.getElementById("tablePreview1"),
+                harvestSlider: document.getElementById("harvestSlider"),
+                sliderHarvestLabel: document.getElementById("slider-harvest-label"),
+                sliderImportLabel: document.getElementById("slider-import-label"),
+                adjustedTableContainer: document.getElementById("adjustedTableContainer"),
+                copyJsonBtn: document.getElementById("copyJsonBtn"),
+                jsonOutput: document.getElementById("jsonOutput"),
+                jsonFileInput: document.getElementById("jsonFileInput"),
+                exportToExcelBtn: document.getElementById("exportToExcelBtn"),
+                jsonFilePreview: document.getElementById("jsonFilePreview"),
+                jsonInput: document.getElementById("jsonInput"),
+                previewJsonBtn: document.getElementById("previewJsonBtn"),
+                exportJsonToExcelBtn: document.getElementById("exportJsonToExcelBtn"),
+                exportJsonToCsvBtn: document.getElementById("exportJsonToCsvBtn"),
+                tablePreview2: document.getElementById("tablePreview2"),
+                jsonOutput2: document.getElementById("jsonOutput2"),
+            };
+
+            // =================== 3. UTILITY FUNCTIONS ===================
+            const showMessage = (msg) => {
+                const div = document.createElement("div");
+                div.textContent = msg;
+                Object.assign(div.style, {
+                    position: "fixed", bottom: "20px", right: "20px", padding: "10px 20px",
+                    background: "#333", color: "#fff",
+                    borderRadius: "6px", zIndex: 1000, boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+                    fontFamily: "var(--font-sans)",
+                });
+                document.body.appendChild(div);
+                setTimeout(() => div.remove(), 3000);
+            };
+            const copyToClipboard = (text) => { navigator.clipboard.writeText(text).then(() => showMessage("Tersalin ke clipboard!")); };
+            const parseNumber = (str, fallback = 0) => {
+                if (typeof str !== 'string' || !str) return fallback;
+                return parseFloat(str.replace(",", ".")) || fallback;
+            };
+            const cleanString = (s) => (s ?? "").replace(/^"|"$/g, "").trim();
+            const customFormatNumber = (n) => {
+                const num = Number(n);
+                if (isNaN(num)) return 0;
+                if (num % 1 === 0) return num;
+                const intPart = Math.floor(num);
+                const intLength = intPart.toString().length;
+                if (intLength === 1) return parseFloat(num.toFixed(2));
+                if (intLength === 2) return parseFloat(num.toFixed(1));
+                return intPart;
+            };
+
+            // =================== 4. CORE LOGIC & DATA PROCESSING ===================
+            const setActiveTab = (tabId) => {
+                if (!tabId) return;
+                elements.tabs.forEach(tab => tab.classList.remove("active"));
+                elements.navLinks.querySelectorAll("button").forEach(btn => btn.classList.remove("active"));
+                const tabToShow = document.getElementById(tabId);
+                const buttonToActivate = elements.navLinks.querySelector(`button[data-tab="${tabId}"]`);
+                if (tabToShow) tabToShow.classList.add("active");
+                if (buttonToActivate) buttonToActivate.classList.add("active");
+            };
+            const getTotals = (data) => {
+                const totals = { harvest: 0, importKwh: 0, exportKwh: 0, energyMeterKwh: 0, storeKwh: 0 };
+                data.forEach(row => {
+                    totals.harvest += row.harvest?.value ?? 0;
+                    totals.importKwh += row.importKwh?.value ?? 0;
+                    totals.exportKwh += row.exportKwh?.value ?? 0;
+                    totals.energyMeterKwh += row.energyMeterKwh?.value ?? 0;
+                    totals.storeKwh += row.storeKwh?.value ?? 0;
+                });
+                return totals;
+            };
+            const getFlattenedChart = (data) => data.map((item) => ({
+                dateTime: item.dateTime ?? "",
+                harvest: item.harvest?.value ?? 0,
+                importKwh: item.importKwh?.value ?? 0,
+                exportKwh: item.exportKwh?.value ?? 0,
+                energyMeterKwh: item.energyMeterKwh?.value ?? 0,
+                storeKwh: item.storeKwh?.value ?? 0,
+                harvestRatio: item.harvestRatio ?? 0,
+                unit: item.harvest?.unit ?? "kWh"
+            }));
+            const processPastedData = (input) => {
+                const lines = input.split(/\r?\n/).filter(line => line.trim());
+                if (lines.length < 2) return [];
+                const isCSV = input.includes(";") && !input.includes("\t");
+                const separator = isCSV ? ";" : "\t";
+                const dataRows = lines.slice(1);
+                return dataRows.map(line => {
+                    const row = line.split(separator).map(cleanString);
+                    if (row.length < 8) return null;
+                    const [dateTimeRaw, harvestRaw, importKwhRaw, exportKwhRaw, energyMeterKwhRaw, storeKwhRaw, harvestRatioRaw, unitRaw] = row;
+                    const dateTime = cleanString(dateTimeRaw);
+                    const unit = cleanString(unitRaw) || 'kWh';
+                    const h = parseNumber(harvestRaw), imp = parseNumber(importKwhRaw);
+                    if (!dateTime || isNaN(h) || isNaN(imp)) return null;
+                    return {
+                        dateTime,
+                        harvest: { value: h, unit },
+                        importKwh: { value: imp, unit },
+                        exportKwh: { value: parseNumber(exportKwhRaw), unit },
+                        energyMeterKwh: { value: parseNumber(energyMeterKwhRaw), unit },
+                        storeKwh: { value: parseNumber(storeKwhRaw), unit },
+                        harvestRatio: parseNumber(harvestRatioRaw),
+                    };
+                }).filter(Boolean);
+            };
+            const processAdjustments = () => {
+                const percentHarvest = state.harvestSplitPercent;
+                const percentImport = 100 - percentHarvest;
+                state.adjustedData = state.originalData.map(row => {
+                    const total = (row.harvest.value || 0) + (row.importKwh.value || 0);
+                    const adjustedHarvest = (total * percentHarvest) / 100;
+                    const adjustedImport = total - adjustedHarvest;
+                    return { ...row, adjustedHarvest, adjustedImport };
+                });
+                const finalChartData = state.adjustedData.map(row => ({
+                    ...row,
+                    harvest: { value: customFormatNumber(row.adjustedHarvest), unit: row.harvest.unit },
+                    importKwh: { value: customFormatNumber(row.adjustedImport), unit: row.importKwh.unit },
+                    adjustedHarvest: undefined,
+                    adjustedImport: undefined,
+                }));
+                state.finalJsonString = `"chart": ${JSON.stringify(finalChartData, (key, value) => value === undefined ? undefined : value, 2)}`;
+            };
+
+            // =================== 5. RENDERING FUNCTIONS ===================
+            const renderAll = () => {
+                if (!state.originalData.length) return;
+                processAdjustments();
+                renderTable(state.originalData, 'tablePreview1', getTotals(state.originalData));
+                renderAdjustedTable(state.adjustedData);
+                renderTotalTable(getTotals(state.originalData), 'total-table-container');
+                elements.jsonOutput.textContent = state.finalJsonString;
+            };
+            const renderTable = (data, containerId, totals) => {
+                const container = document.getElementById(containerId);
+                if (!data.length) { container.innerHTML = ""; return; }
+                const headers = ["dateTime", "harvest", "importKwh", "exportKwh", "energyMeterKwh", "storeKwh", "harvestRatio", "unit"];
+                let totalString = '';
+                if (totals) {
+                    totalString = Object.entries(totals)
+                        .map(([key, value]) => `<strong>${key.replace('Kwh', '')}:</strong> ${customFormatNumber(value)}`)
+                        .join(' &nbsp;&nbsp;•&nbsp;&nbsp; ');
+                }
+                const headerHtml = headers.map((h, i) => `<th>${h}<br><button class="copy-btn" data-col="${i}" data-container="${containerId}">Copy</button></th>`).join('');
+                const bodyHtml = data.map(row => `<tr><td>${row.dateTime}</td><td>${row.harvest?.value ?? 0}</td><td>${row.importKwh?.value ?? 0}</td><td>${row.exportKwh?.value ?? 0}</td><td>${row.energyMeterKwh?.value ?? 0}</td><td>${row.storeKwh?.value ?? 0}</td><td>${row.harvestRatio ?? 0}</td><td>${row.harvest?.unit ?? 'kWh'}</td></tr>`).join('');
+                container.innerHTML = `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;"><div style="font-size: 14px;">${totalString}</div><div style="text-align: right; flex-shrink: 0;"><button class="copy-btn" data-container="${containerId}">Copy Tabel</button></div></div><div class="table-wrapper"><table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`;
+            };
+            const renderAdjustedTable = (data) => {
+                const headers = ["dateTime", "harvest", "importKwh", "adj. Harvest", "adj. Import", "exportKwh", "energyMeterKwh", "storeKwh"];
+                const headerHtml = headers.map(h => `<th>${h}</th>`).join('');
+                const bodyHtml = data.map(row => `<tr><td>${row.dateTime}</td><td>${customFormatNumber(row.harvest.value)}</td><td>${customFormatNumber(row.importKwh.value)}</td><td>${customFormatNumber(row.adjustedHarvest)}</td><td>${customFormatNumber(row.adjustedImport)}</td><td>${customFormatNumber(row.exportKwh.value)}</td><td>${customFormatNumber(row.energyMeterKwh.value)}</td><td>${customFormatNumber(row.storeKwh.value)}</td></tr>`).join('');
+                elements.adjustedTableContainer.innerHTML = `<div class="table-wrapper"><table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`;
+            };
+            const renderTotalTable = (totals, containerId) => {
+                const container = document.getElementById(containerId);
+                container.innerHTML = `<h2>Total Keseluruhan</h2><div class="table-wrapper"><table><tbody><tr><th>Harvest</th><td>${customFormatNumber(totals.harvest)}</td></tr><tr><th>Import</th><td>${customFormatNumber(totals.importKwh)}</td></tr><tr><th>Export</th><td>${customFormatNumber(totals.exportKwh)}</td></tr><tr><th>EnergyMeter</th><td>${customFormatNumber(totals.energyMeterKwh)}</td></tr><tr><th>Store</th><td>${customFormatNumber(totals.storeKwh)}</td></tr></tbody></table></div>`;
+            };
+
+            // =================== 6. EVENT HANDLERS ===================
+            const handleTabClick = (e) => {
+                if (e.target.tagName !== 'BUTTON' || !e.target.dataset.tab) return;
+                const tabId = e.target.dataset.tab;
+                setActiveTab(tabId);
+                localStorage.setItem('activeTab', tabId);
+                if (window.innerWidth <= 768) {
+                    elements.navLinks.classList.remove('open');
+                }
+            };
+            const handleBurgerMenuClick = () => {
+                elements.navLinks.classList.toggle('open');
+            };
+            const handleConvertToJson = () => {
+                const input = elements.excelInput.value.trim();
+                if (!input) return showMessage("Input data Excel kosong!");
+                state.originalData = processPastedData(input);
+                if (state.originalData.length > 0) {
+                    renderAll();
+                    localStorage.setItem("excelInputBackup", input);
+                } else {
+                    showMessage("Tidak ada data valid yang dapat diproses.");
+                }
+            };
+            const handleSliderInput = (e) => {
+                state.harvestSplitPercent = parseInt(e.target.value, 10);
+                elements.sliderHarvestLabel.textContent = state.harvestSplitPercent;
+                elements.sliderImportLabel.textContent = 100 - state.harvestSplitPercent;
+                renderAll();
+            };
+            const handleReset = () => {
+                localStorage.removeItem("excelInputBackup");
+                localStorage.removeItem("jsonInputBackup");
+                localStorage.removeItem("activeTab");
+                location.reload();
+            };
+            const handleCopyJson = () => {
+                if (state.finalJsonString) copyToClipboard(state.finalJsonString);
+            };
+            const handleTableCopy = (e) => {
+                const button = e.target.closest('.copy-btn');
+                if (!button) return;
+                const containerId = button.dataset.container;
+                const table = document.querySelector(`#${containerId} table, .card[id="${containerId}"] table`);
+                if (!table) return;
+                let textToCopy = "";
+                if (button.dataset.col) {
+                    const colIndex = parseInt(button.dataset.col, 10);
+                    textToCopy = Array.from(table.rows).slice(1).map(row => row.cells[colIndex]?.innerText ?? "").join("\n");
+                } else {
+                    const getCellText = (cell) => Array.from(cell.childNodes).filter(node => node.nodeType === Node.TEXT_NODE).map(node => node.textContent.trim()).join(" ");
+                    textToCopy = Array.from(table.rows).map(row => Array.from(row.cells).map(getCellText).join("\t")).join("\n");
+                }
+                copyToClipboard(textToCopy);
+            };
+            const handleJsonFileUpload = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        state.jsonFromFile = JSON.parse(event.target.result);
+                        elements.jsonFilePreview.textContent = JSON.stringify(state.jsonFromFile, null, 2);
+                    } catch (error) {
+                        showMessage("Format JSON tidak valid!");
+                    }
+                };
+                reader.readAsText(file);
+            };
+            const handleExportToExcel = (data, fileName, sheetName) => {
+                if (!data || data.length === 0) return showMessage("Tidak ada data untuk diekspor.");
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+                XLSX.writeFile(workbook, fileName);
+            };
+            const handlePreviewJsonPaste = () => {
+                const input = elements.jsonInput.value;
+                localStorage.setItem("jsonInputBackup", input);
+                try {
+                    if (!input.trim()) {
+                        state.jsonFromPaste = [];
+                        elements.jsonOutput2.textContent = "";
+                        elements.tablePreview2.innerHTML = "";
+                        return;
+                    }
+                    const fullJson = JSON.parse(input);
+                    const chartData = fullJson?.data?.chart || fullJson?.chart || (Array.isArray(fullJson) ? fullJson : []);
+                    if (!Array.isArray(chartData)) throw new Error("Struktur JSON tidak mengandung 'chart' array.");
+                    state.jsonFromPaste = chartData;
+                    elements.jsonOutput2.textContent = JSON.stringify(chartData, null, 2);
+                    renderTable(chartData, 'tablePreview2', getTotals(chartData));
+                } catch (e) {
+                    showMessage("JSON tidak valid: " + e.message);
+                    elements.jsonOutput2.textContent = "Error: " + e.message;
+                    elements.tablePreview2.innerHTML = `<p style="color:red;">JSON tidak valid</p>`;
+                }
+            };
+            const handleExportJsonToCsv = () => {
+                if (!state.jsonFromPaste.length) return showMessage("Data chart kosong.");
+                const rows = getFlattenedChart(state.jsonFromPaste);
+                const headers = Object.keys(rows[0]);
+                const csvRows = [
+                    headers.join(";"),
+                    ...rows.map(row => headers.map(field => {
+                        const val = row[field];
+                        return typeof val === "number" ? val.toString().replace(".", ",") : `"${val}"`;
+                    }).join(";"))
+                ];
+                const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "chart_data.csv";
+                link.click();
+                link.remove();
+            };
+
+            // =================== 7. INITIALIZATION ===================
+            const init = () => {
+                elements.navTabs.addEventListener('click', handleTabClick);
+                elements.burgerMenuBtn.addEventListener('click', handleBurgerMenuClick);
+                elements.convertToJsonBtn.addEventListener('click', handleConvertToJson);
+                elements.harvestSlider.addEventListener('input', handleSliderInput);
+                elements.resetBtn.addEventListener('click', handleReset);
+                elements.copyJsonBtn.addEventListener('click', handleCopyJson);
+                document.getElementById('importExcel').addEventListener('click', handleTableCopy);
+                elements.jsonFileInput.addEventListener('change', handleJsonFileUpload);
+                elements.exportToExcelBtn.addEventListener('click', () => handleExportToExcel(state.jsonFromFile, "exported_data.xlsx", "Data"));
+                elements.previewJsonBtn.addEventListener('click', handlePreviewJsonPaste);
+                elements.exportJsonToExcelBtn.addEventListener('click', () => handleExportToExcel(getFlattenedChart(state.jsonFromPaste), "chart_data.xlsx", "ChartData"));
+                elements.exportJsonToCsvBtn.addEventListener('click', handleExportJsonToCsv);
+                document.getElementById('pasteJsonExport').addEventListener('click', handleTableCopy);
+
+                const savedTabId = localStorage.getItem('activeTab');
+                setActiveTab(savedTabId || 'importExcel');
+
+                const savedExcelInput = localStorage.getItem("excelInputBackup");
+                if (savedExcelInput) {
+                    elements.excelInput.value = savedExcelInput;
+                    handleConvertToJson();
+                }
+                const savedJsonInput = localStorage.getItem("jsonInputBackup");
+                if (savedJsonInput) {
+                    elements.jsonInput.value = savedJsonInput;
+                    handlePreviewJsonPaste();
+                }
+            };
+            init();
+        });
+    </script>
+</body>
+
+</html>

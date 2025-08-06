@@ -1,0 +1,346 @@
+:root {
+    --bg-body: #f4f7f9;
+    --bg-card: #ffffff;
+    --text-primary: #333745;
+    --text-secondary: #7a7e8a;
+    --border-color: #e1e5ee;
+    --accent-color: #26a69a;
+    --accent-color-dark: #00796b;
+    --danger-color: #e53935;
+    --danger-color-light: #ffcdd2;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --font-sans: 'Poppins', sans-serif;
+    --font-mono: 'Fira Code', monospace;
+    --border-radius: 8px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+nav {
+    background-color: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+#nav-links {
+    display: flex;
+}
+
+#nav-links button {
+    flex: 0 1 auto;
+    padding: 16px 20px;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-secondary);
+    font-size: 15px;
+    font-weight: 500;
+    transition: color 0.2s, border-color 0.2s;
+    margin-bottom: -1px;
+}
+
+#nav-links button:hover {
+    color: var(--text-primary);
+}
+
+#nav-links button.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
+#burger-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: var(--text-primary);
+}
+
+.container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.tab {
+    display: none;
+}
+
+.tab.active {
+    display: block;
+}
+
+.card {
+    background-color: var(--bg-card);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-top: 24px;
+}
+
+h2 {
+    font-weight: 600;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+textarea,
+input[type="text"] {
+    width: 100%;
+    font-family: var(--font-mono);
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: #fbfdff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+textarea:focus,
+input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(38, 166, 154, 0.2);
+}
+
+textarea {
+    height: 160px;
+    margin-bottom: 16px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    border: 1px solid transparent;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+button:active {
+    transform: scale(0.97);
+}
+
+.btn-primary {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-color-dark);
+}
+
+.btn-secondary {
+    background-color: #e8eaed;
+    color: var(--text-primary);
+    border-color: #e8eaed;
+}
+
+.btn-secondary:hover {
+    background-color: #d8dbdf;
+}
+
+.btn-danger {
+    background-color: var(--danger-color-light);
+    color: var(--danger-color);
+}
+
+.btn-danger:hover {
+    background-color: #ef9a9a;
+}
+
+input[type="file"] {
+    font-family: var(--font-sans);
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 800px;
+}
+
+th,
+td {
+    padding: 12px 15px;
+    text-align: left;
+    font-size: 13px;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border-color);
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover {
+    background-color: #fbfdff;
+}
+
+.copy-btn {
+    background-color: #f1f3f5;
+    color: var(--text-secondary);
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.copy-btn:hover {
+    background-color: #e9ecef;
+}
+
+pre {
+    background: #282c34;
+    color: #abb2bf;
+    padding: 15px;
+    font-size: 14px;
+    border-radius: var(--border-radius);
+    overflow-x: auto;
+    margin-top: 10px;
+}
+
+details {
+    margin-top: 24px;
+}
+
+summary {
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.table-wrapper-gabung {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.table-wrapper-gabung>div {
+    flex: 1;
+}
+
+.slider-container {
+    padding: 16px;
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius);
+    margin-bottom: 20px;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    background: var(--border-color);
+    outline: none;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--accent-color);
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+@media (max-width: 768px) {
+    nav {
+        justify-content: space-between;
+        position: sticky;
+    }
+
+    #burger-menu-btn {
+        display: block;
+    }
+
+    #nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: var(--bg-card);
+        flex-direction: column;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    #nav-links.open {
+        display: flex;
+    }
+
+    #nav-links button {
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    #nav-links button.active {
+        border-left: 3px solid var(--accent-color);
+        border-bottom-color: var(--border-color);
+    }
+
+    .container {
+        padding: 16px;
+    }
+
+    .table-wrapper-gabung {
+        flex-direction: column;
+    }
+
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+    }
+}
