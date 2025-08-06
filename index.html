@@ -65,7 +65,16 @@
     }
 
     .table-wrapper {
-      /* max-width: 700px; */
+      max-width: 700px;
+      overflow-x: auto;
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 6px;
+      background-color: #fff;
+    }
+
+    .table-wrapper-gabung {
       display: flex;
       gap: 30px;
       overflow-x: auto;
@@ -130,9 +139,10 @@
     <textarea id="excelInput" placeholder="Paste data dari Excel di sini..."></textarea>
     <br />
     <button onclick="convertToJSON()">Konversi ke JSON</button>
-    <div class="table-wrapper">
+    <div id="total-table-container" class="table-wrapper"></div>
+    <div class="table-wrapper-gabung">
       <div id="tablePreview1"></div>
-      <div id="total-table-container"></div>
+      <div id="adjustedTableContainer"></div>
     </div>
 
     <details open style="margin-top: 20px">
@@ -169,6 +179,11 @@
 
   <script>
     // =================== UTILITIES ===================
+    let latestParsedData = [];
+    const adjustPercents = {
+      harvest: 50, // default split 50/50
+    }
+
     function parseNumber(str, fallback = 0) {
       if (!str) return fallback;
       return parseFloat(str.replace(",", ".")) || fallback;
@@ -297,6 +312,83 @@
       return totals;
     }
 
+    function renderAdjustedTable(data) {
+      const container = document.getElementById("adjustedTableContainer");
+
+      let html = `
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>dateTime</th>
+          <th>
+            harvest<br>
+            <input type="range" min="0" max="100" value="${adjustPercents.harvest}" 
+              style="width: 100px;" 
+              oninput="onHarvestSlider(this.value)">
+            <div><span id="slider-harvest">${adjustPercents.harvest}</span>%</div>
+          </th>
+          <th>importKwh</th>
+          <th>adjustedHarvest</th>
+          <th>adjustedImport</th>
+          <th>exportKwh</th>
+          <th>energyMeterKwh</th>
+          <th>storeKwh</th>
+          <th>harvestRatio</th>
+          <th>unit</th>
+        </tr>
+      </thead><tbody>`;
+
+      data.forEach(row => {
+        html += `<tr>
+      <td>${row.dateTime}</td>
+      <td>${row.harvest.value.toFixed(2)}</td>
+      <td>${row.importKwh.value.toFixed(2)}</td>
+      <td>${row.adjustedHarvest.toFixed(2)}</td>
+      <td>${row.adjustedImport.toFixed(2)}</td>
+      <td>${row.exportKwh.value.toFixed(2)}</td>
+      <td>${row.energyMeterKwh.value.toFixed(2)}</td>
+      <td>${row.storeKwh.value.toFixed(2)}</td>
+      <td>${row.harvestRatio.toFixed(2)}</td>
+      <td>${row.harvest.unit}</td>
+    </tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    }
+
+    function onHarvestSlider(value) {
+      const val = parseInt(value);
+      adjustPercents.harvest = val;
+      document.getElementById("slider-harvest").textContent = val;
+      updateAdjustedTableWithSplit();
+    }
+    function updateAdjustedTableWithSplit() {
+      if (!Array.isArray(latestParsedData)) return;
+
+      const percentHarvest = adjustPercents.harvest;
+      const percentImport = 100 - percentHarvest;
+
+      const adjusted = latestParsedData.map(row => {
+        const unit = row.harvest.unit ?? "kWh";
+        const total = row.harvest.value + row.importKwh.value;
+
+        const adjustedHarvest = (total * percentHarvest) / 100;
+        const adjustedImport = total - adjustedHarvest;
+
+        return {
+          ...row,
+          adjustedHarvest,
+          adjustedImport
+        };
+      });
+
+      renderAdjustedTable(adjusted);
+    }
+
+
+
     function renderTotalTable(totals, containerId) {
       const container = document.getElementById(containerId);
 
@@ -402,6 +494,8 @@
       document.getElementById("jsonOutput").textContent = latestJSON;
 
       renderTotalTable(getTotals(result), 'total-table-container');
+      latestParsedData = result;
+      updateAdjustedTableWithSplit();
       renderTable(result, "tablePreview1");
     }
 
