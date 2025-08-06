@@ -2,10 +2,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // =================== 1. STATE MANAGEMENT ===================
     const state = {
         originalData: [], jsonData: [], adjustedData: [],
+        headerData: null,
         finalJsonString: "", jsonFromFile: [], harvestSplitPercent: 50,
     };
 
-    // =================== 2. DOM ELEMENT SELECTORS  ===================
+    // =================== 2. DOM ELEMENT SELECTORS ===================
     const elements = {
         navTabs: document.getElementById("nav-tabs"),
         burgerMenuBtn: document.getElementById("burger-menu-btn"),
@@ -33,11 +34,12 @@ document.addEventListener("DOMContentLoaded", () => {
         sliderHarvestLabelTab3: document.getElementById("slider-harvest-label-tab3"),
         sliderImportLabelTab3: document.getElementById("slider-import-label-tab3"),
         comprehensiveTableContainerTab3: document.getElementById("comprehensiveTableContainerTab3"),
+        jsonHeaderSummary: document.getElementById("json-header-summary"),
         copyJsonBtnTab3: document.getElementById("copyJsonBtnTab3"),
         jsonOutput2: document.getElementById("jsonOutput2"),
     };
 
-    // =================== 3. UTILITY FUNCTIONS  ===================
+    // =================== 3. UTILITY FUNCTIONS ===================
     const showMessage = (msg) => {
         const div = document.createElement("div"); div.textContent = msg;
         Object.assign(div.style, { position: "fixed", bottom: "20px", right: "20px", padding: "10px 20px", background: "#333", color: "#fff", borderRadius: "6px", zIndex: 1000, boxShadow: "0 4px 15px rgba(0,0,0,0.2)", fontFamily: "var(--font-sans)", });
@@ -51,8 +53,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const intPart = Math.floor(num); const intLength = intPart.toString().length;
         if (intLength === 1) return parseFloat(num.toFixed(2)); if (intLength === 2) return parseFloat(num.toFixed(1)); return intPart;
     };
+    const toggleOutputVisibility = (tabId, shouldShow) => {
+        const tabElement = document.getElementById(tabId);
+        if (!tabElement) return;
+        const containers = tabElement.querySelectorAll('.output-container');
+        containers.forEach(container => { container.hidden = !shouldShow; });
+    };
 
-    // =================== 4. CORE LOGIC & DATA PROCESSING  ===================
+    // =================== 4. CORE LOGIC & DATA PROCESSING ===================
     const setActiveTab = (tabId) => {
         if (!tabId) return;
         elements.tabs.forEach(tab => tab.classList.remove("active"));
@@ -61,15 +69,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const buttonToActivate = elements.navLinks.querySelector(`button[data-tab="${tabId}"]`);
         if (tabToShow) tabToShow.classList.add("active");
         if (buttonToActivate) buttonToActivate.classList.add("active");
-    };
-    const toggleOutputVisibility = (tabId, shouldShow) => {
-        const tabElement = document.getElementById(tabId);
-        if (!tabElement) return;
-
-        const containers = tabElement.querySelectorAll('.output-container');
-        containers.forEach(container => {
-            container.hidden = !shouldShow;
-        });
     };
     const getTotals = (data) => {
         const totals = { harvest: 0, importKwh: 0, adjustedHarvest: 0, adjustedImport: 0, exportKwh: 0, energyMeterKwh: 0, storeKwh: 0 };
@@ -139,6 +138,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!state.jsonData.length) return;
         processAdjustments(state.jsonData);
         const totals = getTotals(state.adjustedData);
+        if (state.headerData) {
+            renderHeaderSummary(state.headerData, totals);
+        }
         renderComprehensiveTable(state.adjustedData, totals, 'comprehensiveTableContainerTab3');
         elements.jsonOutput2.textContent = state.finalJsonString;
     };
@@ -167,45 +169,38 @@ document.addEventListener("DOMContentLoaded", () => {
         const bodyHtml = data.map(row => `<tr><td>${row.dateTime}</td><td>${customFormatNumber(row.adjustedHarvest)}</td><td>${customFormatNumber(row.adjustedImport)}</td></tr>`).join('');
         container.innerHTML = `<h2>Data Disesuaikan</h2><div class="table-wrapper"><table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`;
     };
-
-    // FUNGSI INI DIPERBARUI UNTUK TERAKHIR KALINYA
     const renderComprehensiveTable = (data, totals, containerId) => {
         const container = document.getElementById(containerId);
         if (!data || data.length === 0) { container.innerHTML = ""; return; }
-
         const headers = ["DateTime", "Harvest (Ori)", "Import (Ori)", "Harvest (Adj)", "Import (Adj)", "Export", "Energy Meter", "Store", "Unit"];
         const headerHtml = headers.map(h => `<th>${h}</th>`).join('');
-
-        const bodyHtml = data.map(row => `
-              <tr>
-                <td>${row.dateTime}</td>
-                <td>${customFormatNumber(row.harvest.value)}</td>
-                <td>${customFormatNumber(row.importKwh.value)}</td>
-                <td>${customFormatNumber(row.adjustedHarvest)}</td>
-                <td>${customFormatNumber(row.adjustedImport)}</td>
-                <td>${customFormatNumber(row.exportKwh.value)}</td>
-                <td>${customFormatNumber(row.energyMeterKwh.value)}</td>
-                <td>${customFormatNumber(row.storeKwh.value)}</td>
-                <td>${row.harvest?.unit ?? 'kWh'}</td> 
-              </tr>`).join('');
-
-        const footerHtml = `
-            <tr style="font-weight: bold; background-color: #f8f9fa;">
-                <td>TOTAL</td>
-                <td>${customFormatNumber(totals.harvest)}</td>
-                <td>${customFormatNumber(totals.importKwh)}</td>
-                <td>${customFormatNumber(totals.adjustedHarvest)}</td>
-                <td>${customFormatNumber(totals.adjustedImport)}</td>
-                <td>${customFormatNumber(totals.exportKwh)}</td>
-                <td>${customFormatNumber(totals.energyMeterKwh)}</td>
-                <td>${customFormatNumber(totals.storeKwh)}</td>
-                <td></td>
-            </tr>`;
-
+        const bodyHtml = data.map(row => `<tr><td>${row.dateTime}</td><td>${customFormatNumber(row.harvest.value)}</td><td>${customFormatNumber(row.importKwh.value)}</td><td>${customFormatNumber(row.adjustedHarvest)}</td><td>${customFormatNumber(row.adjustedImport)}</td><td>${customFormatNumber(row.exportKwh.value)}</td><td>${customFormatNumber(row.energyMeterKwh.value)}</td><td>${customFormatNumber(row.storeKwh.value)}</td><td>${row.harvest?.unit ?? 'kWh'}</td></tr>`).join('');
+        const footerHtml = `<tr style="font-weight: bold; background-color: #f8f9fa;"><td>TOTAL</td><td>${customFormatNumber(totals.harvest)}</td><td>${customFormatNumber(totals.importKwh)}</td><td>${customFormatNumber(totals.adjustedHarvest)}</td><td>${customFormatNumber(totals.adjustedImport)}</td><td>${customFormatNumber(totals.exportKwh)}</td><td>${customFormatNumber(totals.energyMeterKwh)}</td><td>${customFormatNumber(totals.storeKwh)}</td><td></td></tr>`;
         container.innerHTML = `<table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody><tfoot>${footerHtml}</tfoot></table>`;
     };
+    const renderHeaderSummary = (header, totals) => {
+        const container = elements.jsonHeaderSummary;
+        if (!header) { container.innerHTML = ""; return; }
+        const createSummaryItem = (label, data) => {
+            if (data === undefined || data === null) return '';
+            const value = data.value !== undefined ? data.value : data;
+            const unit = data.unit || '';
+            return `<div class="summary-item"><span class="label">${label}</span><span class="value">${customFormatNumber(value)} ${unit}</span></div>`;
+        };
+        let summaryHtml = `<h2>Ringkasan Header</h2><div class="summary-grid">`;
+        summaryHtml += createSummaryItem('Harvest (Ori)', header.harvest);
+        summaryHtml += createSummaryItem('Grid/PLN (Ori)', header.gridPln);
+        if (totals) {
+            summaryHtml += createSummaryItem('Total Harvest (Adj)', { value: totals.adjustedHarvest, unit: header.harvest.unit });
+            summaryHtml += createSummaryItem('Total Import (Adj)', { value: totals.adjustedImport, unit: header.gridPln.unit });
+        }
+        summaryHtml += createSummaryItem('Energy Consumed', header.enjoy);
+        summaryHtml += createSummaryItem('Excess Energy', header.excessEnergy);
+        summaryHtml += `</div>`;
+        container.innerHTML = summaryHtml;
+    };
 
-    // =================== 6. EVENT HANDLERS  ===================
+    // =================== 6. EVENT HANDLERS ===================
     const handleTabClick = (e) => {
         if (e.target.tagName !== 'BUTTON' || !e.target.dataset.tab) return;
         const tabId = e.target.dataset.tab;
@@ -216,34 +211,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const handleBurgerMenuClick = () => { elements.navLinks.classList.toggle('open'); };
     const handleConvertToJson = () => {
         const input = elements.excelInput.value.trim();
-        if (!input) {
-            showMessage("Input data Excel kosong!");
-            toggleOutputVisibility('importExcel', false); // Sembunyikan jika input kosong
-            return;
-        }
+        if (!input) { showMessage("Input data Excel kosong!"); toggleOutputVisibility('importExcel', false); return; }
         state.originalData = processPastedData(input);
         if (state.originalData.length > 0) {
             renderForTab1();
             localStorage.setItem("excelInputBackup", input);
-            toggleOutputVisibility('importExcel', true); // Tampilkan jika ada data
-        } else {
-            showMessage("Tidak ada data valid yang dapat diproses.");
-            toggleOutputVisibility('importExcel', false); // Sembunyikan jika data tidak valid
-        }
+            toggleOutputVisibility('importExcel', true);
+        } else { showMessage("Tidak ada data valid yang dapat diproses."); toggleOutputVisibility('importExcel', false); }
     };
     const handleSliderInput = (e) => {
         const value = parseInt(e.target.value, 10);
         state.harvestSplitPercent = value;
-
-        // Cek tab mana yang aktif
         if (document.getElementById('importExcel').classList.contains('active')) {
-            // Hanya perbarui elemen & render untuk Tab 1
             elements.harvestSlider.value = value;
             elements.sliderHarvestLabel.textContent = value;
             elements.sliderImportLabel.textContent = 100 - value;
             renderForTab1();
         } else if (document.getElementById('pasteJsonExport').classList.contains('active')) {
-            // Hanya perbarui elemen & render untuk Tab 3
             elements.harvestSliderTab3.value = value;
             elements.sliderHarvestLabelTab3.textContent = value;
             elements.sliderImportLabelTab3.textContent = 100 - value;
@@ -264,11 +248,8 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 state.jsonFromFile = JSON.parse(event.target.result);
                 elements.jsonFilePreview.textContent = JSON.stringify(state.jsonFromFile, null, 2);
-                toggleOutputVisibility('jsonToExcel', true); // Tampilkan jika file valid
-            } catch (error) {
-                showMessage("Format JSON tidak valid!");
-                toggleOutputVisibility('jsonToExcel', false); // Sembunyikan jika file tidak valid
-            }
+                toggleOutputVisibility('jsonToExcel', true);
+            } catch (error) { showMessage("Format JSON tidak valid!"); toggleOutputVisibility('jsonToExcel', false); }
         };
         reader.readAsText(file);
     };
@@ -280,23 +261,11 @@ document.addEventListener("DOMContentLoaded", () => {
         XLSX.utils.book_append_sheet(workbook, worksheet, "AdjustedData");
         XLSX.writeFile(workbook, "adjusted_chart_data.xlsx");
     };
-
     const handleExportToCsv = () => {
         if (!state.adjustedData.length) return showMessage("Tidak ada data untuk diekspor.");
-
         const flattenedData = getFlattenedChart(state.adjustedData);
         const headers = Object.keys(flattenedData[0]);
-
-        const csvRows = [
-            headers.join(";"), // Header
-            ...flattenedData.map(row =>
-                headers.map(field => {
-                    const val = row[field];
-                    return typeof val === "number" ? val.toString().replace(".", ",") : `"${val}"`;
-                }).join(";")
-            )
-        ];
-
+        const csvRows = [headers.join(";"), ...flattenedData.map(row => headers.map(field => { const val = row[field]; return typeof val === "number" ? val.toString().replace(".", ",") : `"${val}"`; }).join(";"))];
         const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
@@ -307,33 +276,36 @@ document.addEventListener("DOMContentLoaded", () => {
     const handlePreviewJsonPaste = () => {
         const input = elements.jsonInput.value;
         localStorage.setItem("jsonInputBackup", input);
+        toggleOutputVisibility('pasteJsonExport', false);
+        elements.jsonHeaderSummary.innerHTML = "";
         try {
             if (!input.trim()) {
-                // Sembunyikan semua output jika input kosong
-                toggleOutputVisibility('pasteJsonExport', false);
                 state.jsonData = [];
-                elements.comprehensiveTableContainerTab3.innerHTML = "";
-                elements.jsonOutput2.textContent = "";
+                state.headerData = null;
                 return;
             }
             const fullJson = JSON.parse(input);
-            const chartData = fullJson?.data?.chart || fullJson?.chart || (Array.isArray(fullJson) ? fullJson : []);
-            if (!Array.isArray(chartData) || chartData.length === 0) throw new Error("Struktur JSON tidak valid atau array 'chart' kosong.");
+            const headerData = fullJson?.data?.header;
+            const chartData = fullJson?.data?.chart || (Array.isArray(fullJson) ? fullJson : []);
+            if (!headerData) throw new Error("Objek 'header' tidak ditemukan di dalam 'data'.");
+            if (!Array.isArray(chartData) || chartData.length === 0) throw new Error("Array 'chart' tidak valid atau kosong.");
 
+            state.headerData = headerData;
             state.jsonData = chartData;
+
             renderForTab3();
-            toggleOutputVisibility('pasteJsonExport', true); // Tampilkan jika JSON valid
+            toggleOutputVisibility('pasteJsonExport', true);
         } catch (e) {
             showMessage("JSON tidak valid: " + e.message);
             state.jsonData = [];
+            state.headerData = null;
             elements.comprehensiveTableContainerTab3.innerHTML = `<p style="color:red;">JSON tidak valid</p>`;
             elements.jsonOutput2.textContent = "Error: " + e.message;
-            // Tampilkan hanya tabel error, sembunyikan yang lain
             toggleOutputVisibility('pasteJsonExport', true);
         }
     };
 
-    // =================== 7. INITIALIZATION  ===================
+    // =================== 7. INITIALIZATION ===================
     const init = () => {
         elements.burgerMenuBtn.addEventListener('click', handleBurgerMenuClick);
         elements.navTabs.addEventListener('click', handleTabClick);
@@ -347,7 +319,6 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.copyJsonBtnTab3.addEventListener('click', handleCopyJson);
         elements.exportJsonToExcelBtn.addEventListener('click', handleExportToExcel);
         elements.exportJsonToCsvBtn.addEventListener('click', handleExportToCsv);
-        elements.exportJsonToCsvBtn.addEventListener('click', () => { /* Logika CSV perlu disesuaikan jika ingin digunakan */ });
         elements.resetBtn.addEventListener('click', handleReset);
 
         const savedTabId = localStorage.getItem('activeTab');

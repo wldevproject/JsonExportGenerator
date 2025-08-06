@@ -285,6 +285,33 @@ summary {
     border: 0;
 }
 
+.summary-grid {
+    display: grid;
+    /* Membuat kolom responsif secara otomatis */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+}
+
+.summary-item {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.summary-item .label {
+    font-size: 14px;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 5px;
+}
+
+.summary-item .value {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
 input[type="range"] {
     -webkit-appearance: none;
     width: 100%;
