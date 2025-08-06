@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
         finalJsonString: "", jsonFromFile: [], harvestSplitPercent: 50,
     };
 
+    let resizeTimer; // Variabel untuk debouncing resize
+
     // =================== 2. DOM ELEMENT SELECTORS ===================
     const elements = {
         navTabs: document.getElementById("nav-tabs"),
@@ -220,7 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     const renderSankeyChart = (header, totals) => {
         const container = elements.sankeyChartContainer;
-        if (!header || !totals) { container.innerHTML = ""; return; }
+        if (!header || !totals || !container) { container.innerHTML = ""; return; }
 
         google.charts.setOnLoadCallback(() => {
             const data = new google.visualization.DataTable();
@@ -236,12 +238,25 @@ document.addEventListener("DOMContentLoaded", () => {
             ];
 
             const validFlows = flows.filter(flow => flow[2] > 0);
+            if (validFlows.length === 0) {
+                container.innerHTML = '<h2>Alur Energi Disesuaikan (Sankey)</h2><p>Tidak ada data alur energi untuk ditampilkan.</p>';
+                return;
+            }
             data.addRows(validFlows);
 
+            const containerWidth = container.offsetWidth;
             const options = {
-                height: 300,
+                // Tinggi tidak diatur agar otomatis menyesuaikan
+                // width juga tidak diatur agar mengisi kontainer
                 sankey: {
-                    node: { colors: ['#26a69a', '#2979ff', '#f57c00', '#d32f2f', '#7b1fa2'], label: { fontName: 'Poppins', fontSize: 14 } },
+                    node: {
+                        colors: ['#26a69a', '#2979ff', '#f57c00', '#d32f2f', '#7b1fa2'],
+                        label: {
+                            fontName: 'Poppins',
+                            // Ukuran font dinamis berdasarkan lebar kontainer
+                            fontSize: containerWidth < 500 ? 11 : 14
+                        }
+                    },
                     link: { colorMode: 'gradient', colors: ['#26a69a', '#2979ff', '#f57c00', '#d32f2f', '#7b1fa2'] }
                 }
             };
@@ -255,6 +270,17 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // =================== 6. EVENT HANDLERS ===================
+    const handleResize = () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            const pasteJsonTab = document.getElementById('pasteJsonExport');
+            // Hanya gambar ulang chart jika tab-nya aktif dan datanya ada
+            if (pasteJsonTab && pasteJsonTab.classList.contains('active') && state.headerData && state.adjustedData.length > 0) {
+                const totals = getTotals(state.adjustedData);
+                renderSankeyChart(state.headerData, totals);
+            }
+        }, 250); // Debounce untuk 250ms
+    };
     const handleTabClick = (e) => {
         if (e.target.tagName !== 'BUTTON' || !e.target.dataset.tab) return;
         const tabId = e.target.dataset.tab;
@@ -386,6 +412,9 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.jsonModeSelectors.forEach(radio => {
             radio.addEventListener('change', handleJsonModeChange);
         });
+
+        // Event listener baru untuk resize
+        window.addEventListener('resize', handleResize);
 
         const savedTabId = localStorage.getItem('activeTab');
         setActiveTab(savedTabId || 'importExcel');
