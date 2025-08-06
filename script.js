@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
         finalJsonString: "", jsonFromFile: [], harvestSplitPercent: 50,
     };
 
-    // =================== 2. DOM ELEMENT SELECTORS (Tidak ada perubahan) ===================
+    // =================== 2. DOM ELEMENT SELECTORS  ===================
     const elements = {
         navTabs: document.getElementById("nav-tabs"),
         burgerMenuBtn: document.getElementById("burger-menu-btn"),
@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
         jsonOutput2: document.getElementById("jsonOutput2"),
     };
 
-    // =================== 3. UTILITY FUNCTIONS (Tidak ada perubahan) ===================
+    // =================== 3. UTILITY FUNCTIONS  ===================
     const showMessage = (msg) => {
         const div = document.createElement("div"); div.textContent = msg;
         Object.assign(div.style, { position: "fixed", bottom: "20px", right: "20px", padding: "10px 20px", background: "#333", color: "#fff", borderRadius: "6px", zIndex: 1000, boxShadow: "0 4px 15px rgba(0,0,0,0.2)", fontFamily: "var(--font-sans)", });
@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (intLength === 1) return parseFloat(num.toFixed(2)); if (intLength === 2) return parseFloat(num.toFixed(1)); return intPart;
     };
 
-    // =================== 4. CORE LOGIC & DATA PROCESSING (Tidak ada perubahan) ===================
+    // =================== 4. CORE LOGIC & DATA PROCESSING  ===================
     const setActiveTab = (tabId) => {
         if (!tabId) return;
         elements.tabs.forEach(tab => tab.classList.remove("active"));
@@ -61,6 +61,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const buttonToActivate = elements.navLinks.querySelector(`button[data-tab="${tabId}"]`);
         if (tabToShow) tabToShow.classList.add("active");
         if (buttonToActivate) buttonToActivate.classList.add("active");
+    };
+    const toggleOutputVisibility = (tabId, shouldShow) => {
+        const tabElement = document.getElementById(tabId);
+        if (!tabElement) return;
+
+        const containers = tabElement.querySelectorAll('.output-container');
+        containers.forEach(container => {
+            container.hidden = !shouldShow;
+        });
     };
     const getTotals = (data) => {
         const totals = { harvest: 0, importKwh: 0, adjustedHarvest: 0, adjustedImport: 0, exportKwh: 0, energyMeterKwh: 0, storeKwh: 0 };
@@ -196,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
         container.innerHTML = `<table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody><tfoot>${footerHtml}</tfoot></table>`;
     };
 
-    // =================== 6. EVENT HANDLERS (Tidak ada perubahan) ===================
+    // =================== 6. EVENT HANDLERS  ===================
     const handleTabClick = (e) => {
         if (e.target.tagName !== 'BUTTON' || !e.target.dataset.tab) return;
         const tabId = e.target.dataset.tab;
@@ -207,12 +216,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const handleBurgerMenuClick = () => { elements.navLinks.classList.toggle('open'); };
     const handleConvertToJson = () => {
         const input = elements.excelInput.value.trim();
-        if (!input) return showMessage("Input data Excel kosong!");
+        if (!input) {
+            showMessage("Input data Excel kosong!");
+            toggleOutputVisibility('importExcel', false); // Sembunyikan jika input kosong
+            return;
+        }
         state.originalData = processPastedData(input);
         if (state.originalData.length > 0) {
             renderForTab1();
             localStorage.setItem("excelInputBackup", input);
-        } else { showMessage("Tidak ada data valid yang dapat diproses."); }
+            toggleOutputVisibility('importExcel', true); // Tampilkan jika ada data
+        } else {
+            showMessage("Tidak ada data valid yang dapat diproses.");
+            toggleOutputVisibility('importExcel', false); // Sembunyikan jika data tidak valid
+        }
     };
     const handleSliderInput = (e) => {
         const value = parseInt(e.target.value, 10);
@@ -247,7 +264,11 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 state.jsonFromFile = JSON.parse(event.target.result);
                 elements.jsonFilePreview.textContent = JSON.stringify(state.jsonFromFile, null, 2);
-            } catch (error) { showMessage("Format JSON tidak valid!"); }
+                toggleOutputVisibility('jsonToExcel', true); // Tampilkan jika file valid
+            } catch (error) {
+                showMessage("Format JSON tidak valid!");
+                toggleOutputVisibility('jsonToExcel', false); // Sembunyikan jika file tidak valid
+            }
         };
         reader.readAsText(file);
     };
@@ -288,6 +309,8 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("jsonInputBackup", input);
         try {
             if (!input.trim()) {
+                // Sembunyikan semua output jika input kosong
+                toggleOutputVisibility('pasteJsonExport', false);
                 state.jsonData = [];
                 elements.comprehensiveTableContainerTab3.innerHTML = "";
                 elements.jsonOutput2.textContent = "";
@@ -296,17 +319,21 @@ document.addEventListener("DOMContentLoaded", () => {
             const fullJson = JSON.parse(input);
             const chartData = fullJson?.data?.chart || fullJson?.chart || (Array.isArray(fullJson) ? fullJson : []);
             if (!Array.isArray(chartData) || chartData.length === 0) throw new Error("Struktur JSON tidak valid atau array 'chart' kosong.");
+
             state.jsonData = chartData;
             renderForTab3();
+            toggleOutputVisibility('pasteJsonExport', true); // Tampilkan jika JSON valid
         } catch (e) {
             showMessage("JSON tidak valid: " + e.message);
             state.jsonData = [];
             elements.comprehensiveTableContainerTab3.innerHTML = `<p style="color:red;">JSON tidak valid</p>`;
             elements.jsonOutput2.textContent = "Error: " + e.message;
+            // Tampilkan hanya tabel error, sembunyikan yang lain
+            toggleOutputVisibility('pasteJsonExport', true);
         }
     };
 
-    // =================== 7. INITIALIZATION (Tidak ada perubahan) ===================
+    // =================== 7. INITIALIZATION  ===================
     const init = () => {
         elements.burgerMenuBtn.addEventListener('click', handleBurgerMenuClick);
         elements.navTabs.addEventListener('click', handleTabClick);

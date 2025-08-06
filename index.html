@@ -24,14 +24,15 @@
             </svg>
         </button>
         <div id="nav-links">
-            <button data-tab="importExcel" class="active">Excel → JSON</button>
+            <button data-tab="importExcel">Excel → JSON</button>
             <button data-tab="jsonToExcel">JSON → Excel</button>
             <button data-tab="pasteJsonExport">Editor JSON → Excel</button>
         </div>
     </nav>
 
     <main class="container">
-        <div id="importExcel" class="tab active">
+        <!-- Tab 1 -->
+        <div id="importExcel" class="tab">
             <div class="card">
                 <h2>Tempel Data Excel → Format JSON Chart</h2>
                 <label for="excelInput" class="visually-hidden">Input Data Excel Atau Format CSV</label>
@@ -56,11 +57,11 @@
                     </button>
                 </div>
             </div>
-            <div class="table-wrapper-gabung">
+            <div class="table-wrapper-gabung output-container" hidden>
                 <div class="card" id="total-table-container"></div>
                 <div class="card" id="tablePreview1"></div>
             </div>
-            <div class="card">
+            <div class="card output-container" hidden>
                 <div class="slider-container">
                     <label><strong>Distribusi Persen ke Harvest:</strong> <span
                             id="slider-harvest-label">50</span>%</label>
@@ -69,7 +70,7 @@
                 </div>
                 <div class="table-wrapper" id="adjustedTableContainer"></div>
             </div>
-            <div class="card">
+            <div class="card output-container" hidden>
                 <details open>
                     <summary><strong>Hasil JSON yang Disesuaikan</strong></summary>
                     <div class="copy-bar" style="text-align: right; margin-top: 10px;">
@@ -80,6 +81,7 @@
             </div>
         </div>
 
+        <!-- Tab 2 -->
         <div id="jsonToExcel" class="tab">
             <div class="card">
                 <h2>Import JSON → Export Excel</h2>
@@ -96,13 +98,14 @@
                         Export to Excel
                     </button>
                 </div>
-                <details open style="margin-top: 20px;">
+                <details open style="margin-top: 20px;" class="output-container" hidden>
                     <summary><strong>Preview File JSON</strong></summary>
                     <pre id="jsonFilePreview"></pre>
                 </details>
             </div>
         </div>
 
+        <!-- Tab 3 -->
         <div id="pasteJsonExport" class="tab">
             <div class="card">
                 <h2>Editor & Adjuster JSON</h2>
@@ -117,7 +120,7 @@
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card output-container" hidden>
                 <div class="slider-container">
                     <label><strong>Distribusi Persen ke Harvest:</strong> <span
                             id="slider-harvest-label-tab3">50</span>%</label>
@@ -127,7 +130,7 @@
                 <div class="table-wrapper" id="comprehensiveTableContainerTab3"></div>
             </div>
 
-            <div class="card">
+            <div class="card output-container" hidden>
                 <details open>
                     <summary><strong>Hasil JSON yang Disesuaikan</strong></summary>
                     <div class="copy-bar" style="text-align: right; margin-top: 10px;">
