@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const state = {
         originalData: [], jsonData: [], adjustedData: [],
         headerData: null,
+        fullJsonData: null,
+        jsonOutputMode: 'full',
         finalJsonString: "", jsonFromFile: [], harvestSplitPercent: 50,
     };
 
@@ -37,6 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
         jsonHeaderSummary: document.getElementById("json-header-summary"),
         copyJsonBtnTab3: document.getElementById("copyJsonBtnTab3"),
         jsonOutput2: document.getElementById("jsonOutput2"),
+        jsonModeSelectors: document.querySelectorAll('input[name="jsonModeTab3"]'),
     };
 
     // =================== 3. UTILITY FUNCTIONS ===================
@@ -111,17 +114,34 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     const processAdjustments = (sourceData) => {
         const percentHarvest = state.harvestSplitPercent; const percentImport = 100 - percentHarvest;
+
         state.adjustedData = sourceData.map(row => {
             const total = (row.harvest.value || 0) + (row.importKwh.value || 0);
-            const adjustedHarvest = (total * percentHarvest) / 100; const adjustedImport = total - adjustedHarvest;
+            const adjustedHarvest = (total * percentHarvest) / 100;
+            const adjustedImport = total - adjustedHarvest;
             return { ...row, adjustedHarvest, adjustedImport };
         });
+
         const finalChartData = state.adjustedData.map(row => ({
-            ...row, harvest: { value: customFormatNumber(row.adjustedHarvest), unit: row.harvest.unit },
+            ...row,
+            harvest: { value: customFormatNumber(row.adjustedHarvest), unit: row.harvest.unit },
             importKwh: { value: customFormatNumber(row.adjustedImport), unit: row.importKwh.unit },
-            adjustedHarvest: undefined, adjustedImport: undefined,
+            adjustedHarvest: undefined,
+            adjustedImport: undefined,
         }));
-        state.finalJsonString = `"chart": ${JSON.stringify(finalChartData, (key, value) => value === undefined ? undefined : value, 2)}`;
+
+        if (state.jsonOutputMode === 'full' && state.fullJsonData) {
+            const newJsonOutput = JSON.parse(JSON.stringify(state.fullJsonData));
+            const totals = getTotals(state.adjustedData);
+
+            newJsonOutput.data.header.harvest.value = customFormatNumber(totals.adjustedHarvest);
+            newJsonOutput.data.header.gridPln.value = customFormatNumber(totals.adjustedImport);
+
+            newJsonOutput.data.chart = finalChartData;
+            state.finalJsonString = JSON.stringify(newJsonOutput, null, 2);
+        } else {
+            state.finalJsonString = `"chart": ${JSON.stringify(finalChartData, (key, value) => value === undefined ? undefined : value, 2)}`;
+        }
     };
 
     // =================== 5. RENDERING FUNCTIONS ===================
@@ -276,20 +296,27 @@ document.addEventListener("DOMContentLoaded", () => {
     const handlePreviewJsonPaste = () => {
         const input = elements.jsonInput.value;
         localStorage.setItem("jsonInputBackup", input);
+
         toggleOutputVisibility('pasteJsonExport', false);
         elements.jsonHeaderSummary.innerHTML = "";
+
         try {
             if (!input.trim()) {
                 state.jsonData = [];
                 state.headerData = null;
+                state.fullJsonData = null;
                 return;
             }
+
             const fullJson = JSON.parse(input);
+
             const headerData = fullJson?.data?.header;
             const chartData = fullJson?.data?.chart || (Array.isArray(fullJson) ? fullJson : []);
+
             if (!headerData) throw new Error("Objek 'header' tidak ditemukan di dalam 'data'.");
             if (!Array.isArray(chartData) || chartData.length === 0) throw new Error("Array 'chart' tidak valid atau kosong.");
 
+            state.fullJsonData = fullJson;
             state.headerData = headerData;
             state.jsonData = chartData;
 
@@ -299,9 +326,18 @@ document.addEventListener("DOMContentLoaded", () => {
             showMessage("JSON tidak valid: " + e.message);
             state.jsonData = [];
             state.headerData = null;
+            state.fullJsonData = null;
             elements.comprehensiveTableContainerTab3.innerHTML = `<p style="color:red;">JSON tidak valid</p>`;
             elements.jsonOutput2.textContent = "Error: " + e.message;
             toggleOutputVisibility('pasteJsonExport', true);
+        }
+    };
+    const handleJsonModeChange = (e) => {
+        state.jsonOutputMode = e.target.value;
+        if (document.getElementById('importExcel').classList.contains('active')) {
+            renderForTab1();
+        } else if (document.getElementById('pasteJsonExport').classList.contains('active')) {
+            renderForTab3();
         }
     };
 
@@ -320,7 +356,9 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.exportJsonToExcelBtn.addEventListener('click', handleExportToExcel);
         elements.exportJsonToCsvBtn.addEventListener('click', handleExportToCsv);
         elements.resetBtn.addEventListener('click', handleReset);
-
+        elements.jsonModeSelectors.forEach(radio => {
+            radio.addEventListener('change', handleJsonModeChange);
+        });
         const savedTabId = localStorage.getItem('activeTab');
         setActiveTab(savedTabId || 'importExcel');
 

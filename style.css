@@ -312,6 +312,22 @@ summary {
     color: var(--text-primary);
 }
 
+.json-output-mode {
+    margin-top: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+}
+
+.json-output-mode label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
 input[type="range"] {
     -webkit-appearance: none;
     width: 100%;

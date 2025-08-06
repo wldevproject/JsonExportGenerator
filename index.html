@@ -73,6 +73,11 @@
             <div class="card output-container" hidden>
                 <details open>
                     <summary><strong>Hasil JSON yang Disesuaikan</strong></summary>
+
+                    <div class="json-output-mode">
+                        <label><input type="radio" name="jsonMode" value="chart_only" checked> Chart Only</label>
+                    </div>
+
                     <div class="copy-bar" style="text-align: right; margin-top: 10px;">
                         <button class="copy-btn" id="copyJsonBtn">Copy JSON</button>
                     </div>
@@ -136,6 +141,12 @@
             <div class="card output-container" hidden>
                 <details open>
                     <summary><strong>Hasil JSON yang Disesuaikan</strong></summary>
+
+                    <div class="json-output-mode">
+                        <label><input type="radio" name="jsonModeTab3" value="full" checked> Full JSON</label>
+                        <label><input type="radio" name="jsonModeTab3" value="chart_only"> Chart Only</label>
+                    </div>
+
                     <div class="copy-bar" style="text-align: right; margin-top: 10px;">
                         <button class="copy-btn" id="copyJsonBtnTab3">Copy JSON</button>
                     </div>
