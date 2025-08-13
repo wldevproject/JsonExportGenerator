@@ -3,8 +3,12 @@
 A simple JSON-to-CSV/Excel export tool built specifically for project needs.  
 This generator is **customized** and may not support all JSON structures.
 
-👉 **Live Demo:**  
-[https://wldevproject.github.io/JsonExportGenerator/](https://wldevproject.github.io/JsonExportGenerator/)
+👉 **Live Demo: JsonExportGenerator**  
+[JsonExportGenerator](https://wldevproject.github.io/JsonExportGenerator/)
+
+👉 **Live Demo: Documentation**  
+[Documentation](https://wldevproject.github.io/JsonExportGenerator/web/documentation.html)
+
 
 ---
 
