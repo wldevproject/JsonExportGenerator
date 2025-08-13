@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sundaya Demo API – Docs</title>
+    <link rel="stylesheet" href="style.css">
+
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            document.documentElement.classList.add('light-theme');
+        }
+    </script>
+
+    <script src="script.js" defer></script>
+</head>
+
+<body>
+    <header>
+        <div class="wrap">
+            <div class="title">Sundaya Demo API — Dokumentasi</div>
+            <div class="sub">File Gateway &amp; Project Admin</div>
+
+            <button id="theme-toggle" title="Ganti tema terang/gelap">
+                <span class="icon"></span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <nav>
+            <div class="toc">
+                <a href="#overview">Overview</a>
+                <a href="#auth">Authentication</a>
+                <a href="#endpoints">Endpoints</a>
+                <a href="#schemas">Data Schemas</a>
+                <a href="#examples">Examples</a>
+                <a href="#errors">Errors</a>
+                <a href="#notes">Notes</a>
+            </div>
+        </nav>
+
+        <div class="content">
+            <section id="overview">
+                <h2>Overview</h2>
+                <p class="muted">API ini menyediakan dua layanan utama untuk mengelola data proyek dan file JSON
+                    terkait.</p>
+                <div class="row">
+                    <div class="chip"><span class="method GET">GET</span> <code>/api/json?file={path}</code> <span
+                            class="muted">Ambil JSON</span></div>
+                    <div class="chip"><span class="method POST">POST</span> <code>/api/json?file={path}</code> <span
+                            class="muted">Timpa JSON</span></div>
+                    <div class="chip"><span class="method POST">POST</span> <code>/api/project</code> <span
+                            class="muted">Tambah/Update Project</span></div>
+                    <div class="chip"><span class="method DELETE">DELETE</span> <code>/api/project?slug={slug}</code>
+                        <span class="muted">Hapus Project</span></div>
+                </div>
+            </section>
+
+            <section id="auth">
+                <h2>Authentication</h2>
+                <p>Setiap request yang memodifikasi data (<code>POST</code>, <code>DELETE</code>) wajib menyertakan
+                    header <code>X-API-Key</code>. Untuk request <code>POST</code> yang mengirim data JSON, sertakan
+                    juga header <code>Content-Type</code>.</p>
+
+                <details class="example-group">
+                    <summary><strong>Header untuk Tambah/Update Project (POST)</strong></summary>
+                    <div class="details-content">
+                        <pre><code>Content-Type: application/json
+X-API-Key: YOUR_API_KEY</code></pre>
+                    </div>
+                </details>
+
+                <details class="example-group">
+                    <summary><strong>Header untuk Hapus Project (DELETE)</strong></summary>
+                    <div class="details-content">
+                        <pre><code>X-API-Key: YOUR_API_KEY</code></pre>
+                    </div>
+                </details>
+            </section>
+
+            <section id="endpoints">
+                <h2>Endpoints</h2>
+                <h3>File Gateway <code>/api/json</code></h3>
+                <p class="muted">Endpoint ini digunakan untuk interaksi langsung dengan file JSON di server.</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Method</th>
+                                <th>Endpoint</th>
+                                <th>Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="method GET">GET</span></td>
+                                <td><code>/api/json?file={path}</code></td>
+                                <td>Mengambil konten mentah dari file JSON. Path bersifat relatif dari direktori
+                                    <code>/demo/</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><span class="method POST">POST</span></td>
+                                <td><code>/api/json?file={path}</code></td>
+                                <td>Menimpa (overwrite) seluruh konten file JSON yang dituju dengan data dari body.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Project Admin <code>/api/project</code></h3>
+                <p class="muted">Endpoint level tinggi untuk mengelola proyek secara terstruktur.</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Method</th>
+                                <th>Endpoint</th>
+                                <th>Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="method POST">POST</span></td>
+                                <td><code>/api/project</code></td>
+                                <td>Menambah (atau memperbarui) proyek. Jika <code>clone_from</code> disertakan, API
+                                    akan menyalin direktori dari slug proyek sumber.</td>
+                            </tr>
+                            <tr>
+                                <td><span class="method DELETE">DELETE</span></td>
+                                <td><code>/api/project?slug={slug}</code></td>
+                                <td>Menghapus entri proyek dari <code>sidebar.json</code> dan juga menghapus direktori
+                                    fisik terkait.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="schemas">
+                <h2>Data Schemas</h2>
+                <p class="muted">Struktur data utama yang digunakan dalam API.</p>
+                <details>
+                    <summary>Tampilkan Skema <code>sidebar.json</code></summary>
+                    <pre><code>{
+  "success": true,
+  "data": {
+    "customers": [
+      {
+        "customer_uuid": "string",
+        "customer_id": "string",
+        "customer_name": "string",
+        "capacity": { "value": number, "unit": "string" },
+        "ratio": number,
+        "projects": [
+          {
+            "project_uuid": "string",
+            "project_id": "string",
+            "project_name": "string",
+            "ratio": number,
+            "status": "string",
+            "capacity": { "value": number, "unit": "string" },
+            "buildings": [
+              {
+                "building_uuid": "string",
+                "name": "string",
+                "capacity": number,
+                "devices": ["string"]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+                </details>
+            </section>
+
+            <section id="examples">
+                <h2>Examples</h2>
+                <details class="example-group">
+                    <summary>
+                        <span class="method GET">GET</span>
+                        <strong>Mengambil Konfigurasi Sidebar</strong>
+                        <code>/api/json?file=sidebar.json</code>
+                    </summary>
+                    <div class="details-content">
+                        <p class="muted">Request untuk melihat data semua customer dan proyek yang ada saat ini.</p>
+                        <details>
+                            <summary>Response Body</summary>
+                            <pre><code>{
+  "success": true,
+  "data": {
+    "customers": [
+      {
+        "customer_uuid": "1eec173b",
+        "customer_name": "CR DEMO",
+        "projects": [
+          {
+            "project_uuid": "1f0474fa",
+            "project_name": "PULAU SUMATRA"
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+                        </details>
+                    </div>
+                </details>
+
+                <details class="example-group">
+                    <summary>
+                        <span class="method POST">POST</span>
+                        <strong>Menambah Proyek Baru (Kloning)</strong>
+                        <code>/api/project</code>
+                    </summary>
+                    <div class="details-content">
+                        <p class="muted">Membuat proyek "PULAU MADURA" dengan menyalin struktur direktori dari
+                            "pr_sumatra".</p>
+
+                        <details>
+                            <summary>Request Headers</summary>
+                            <pre><code>Content-Type: application/json
+X-API-Key: YOUR_API_KEY</code></pre>
+                        </details>
+
+                        <details>
+                            <summary>Request Body</summary>
+                            <pre><code>{
+  "project_name": "PULAU MADURA",
+  "ratio": 1.23,
+  "status": "Online",
+  "capacity": { "value": 80, "unit": "kWp" },
+  "buildings": [
+    { "building_uuid": "madura-001", "name": "PULAU MADURA", "capacity": 80, "devices": ["madura-01","madura-02"] }
+  ],
+  "slug": "pr_madura",
+  "clone_from": "pr_sumatra"
+}</code></pre>
+                        </details>
+
+                        <details>
+                            <summary>Response Body</summary>
+                            <pre><code>{
+  "ok": true,
+  "action": "update",
+  "slug": "pr_madura",
+  "sidebar": "updated",
+  "created_files": [
+    "energy_chart/pr_madura/customer-reference.json (cloned)",
+    "energy_chart/pr_madura/day.json (cloned)",
+    "energy_chart/pr_madura/energy-flow.json (template)",
+    "energy_chart/pr_madura/lifetime.json (cloned)",
+    "energy_chart/pr_madura/month.json (cloned)",
+    "energy_chart/pr_madura/year.json (cloned)",
+    "overview/pr_madura/customer-reference.json (cloned)",
+    "overview/pr_madura/day.json (cloned)",
+    "overview/pr_madura/energy-flow.json (cloned)",
+    "overview/pr_madura/lifetime.json (cloned)",
+    "overview/pr_madura/month.json (cloned)",
+    "overview/pr_madura/year.json (cloned)"
+  ],
+  "cloned_from": "pr_sumatra",
+  "project_uuid": "64c73f57",
+  "project_id": "PR#105"
+}</code></pre>
+                        </details>
+                    </div>
+                </details>
+
+                <details class="example-group">
+                    <summary>
+                        <span class="method DELETE">DELETE</span>
+                        <strong>Menghapus Proyek</strong>
+                        <code>/api/project?slug=pr_madura</code>
+                    </summary>
+                    <div class="details-content">
+                        <p class="muted">Menghapus proyek "PULAU MADURA" berdasarkan slug-nya.</p>
+                        <details>
+                            <summary>Request Headers</summary>
+                            <pre><code>X-API-Key: YOUR_API_KEY</code></pre>
+                        </details>
+                        <details>
+                            <summary>Response Body</summary>
+                            <pre><code>{
+  "ok": true,
+  "action": "delete",
+  "slug": "pr_madura",
+  "deleted_paths": [
+    "energy_chart/pr_madura",
+    "overview/pr_madura"
+  ],
+  "removed_projects": 1
+}</code></pre>
+                        </details>
+                    </div>
+                </details>
+
+                <details class="example-group">
+                    <summary>
+                        <span class="method POST">POST</span>
+                        <strong>Menimpa File Sidebar</strong>
+                        <code>/api/json?file=sidebar.json</code>
+                    </summary>
+                    <div class="details-content">
+                        <p class="muted">Mengganti seluruh konten `sidebar.json`. Gunakan dengan hati-hati.</p>
+                        <details>
+                            <summary>Request Headers</summary>
+                            <pre><code>Content-Type: application/json
+X-API-Key: YOUR_API_KEY</code></pre>
+                        </details>
+                        <details>
+                            <summary>Request Body</summary>
+                            <pre><code>{
+  "success": true,
+  "data": {
+    "customers": [
+      {
+        "customer_uuid": "1eec173b",
+        "customer_name": "CR DEMO",
+        "projects": []
+      }
+    ]
+  }
+}</code></pre>
+                        </details>
+                        <details>
+                            <summary>Response Body</summary>
+                            <pre><code>{
+  "ok": true,
+  "file": "sidebar.json"
+}</code></pre>
+                        </details>
+                    </div>
+                </details>
+            </section>
+
+            <section id="errors">
+                <h2>Errors</h2>
+                <p class="muted">Daftar kemungkinan error yang dikembalikan oleh API.</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>HTTP Status</th>
+                                <th>Response Body</th>
+                                <th>Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>401 Unauthorized</td>
+                                <td><code>{"error":"unauthorized"}</code></td>
+                                <td>API key tidak valid atau tidak disertakan.</td>
+                            </tr>
+                            <tr>
+                                <td>404 Not Found</td>
+                                <td><code>{"error":"file not found"}</code></td>
+                                <td>File atau resource yang diminta tidak ada.</td>
+                            </tr>
+                            <tr>
+                                <td>405 Method Not Allowed</td>
+                                <td><code>{"error":"method not allowed"}</code></td>
+                                <td>Menggunakan method HTTP yang salah (misal: GET pada endpoint yang hanya menerima
+                                    POST).</td>
+                            </tr>
+                            <tr>
+                                <td>500 Internal Server Error</td>
+                                <td><code>{"error":"server processing failed"}</code></td>
+                                <td>Terjadi kesalahan di sisi server, misal: gagal menulis file.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="notes">
+                <h2>Notes</h2>
+                <ul>
+                    <li><b>Path Relatif:</b> Semua path file yang digunakan di parameter <code>file</code> adalah
+                        relatif terhadap direktori <code>/api/demo/</code> di server.</li>
+                    <li><b>Kloning:</b> Properti <code>clone_from</code> hanya digunakan saat proses penambahan proyek
+                        dan tidak disimpan di `sidebar.json`.</li>
+                    <li><b>URL Encoding:</b> Gunakan <code>%23</code> untuk karakter <code>#</code> jika dikirim via
+                        query URL (misal: <code>?project_id=PR%23101</code>).</li>
+                </ul>
+            </section>
+        </div>
+    </main>
+
+</body>
+
+</html>

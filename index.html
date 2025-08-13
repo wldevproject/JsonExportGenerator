@@ -43,7 +43,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                             viewBox="0 0 16 16">
                             <path
-                                d="M5 11.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5M1.625 2.158a.5.5 0 0 1 .375-.158h11.5a.5.5 0 0 1 .5.5v11.5a.5.5 0 0 1-.5.5h-11.5a.5.5 0 0 1-.5-.5V2.5a.5.5 0 0 1 .125-.342zM2 2.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5V13l-5-5V2.5z" />
+                                d="M5 11.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5M1.625 2.158a.5.5 0 0 1 .375-.158h11.5a.5.5 0 0 1 .5.5v11.5a.5.5 0 0 1-.5-.5h-11.5a.5.5 0 0 1-.5-.5V2.5a.5.5 0 0 1 .125-.342zM2 2.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5V13l-5-5V2.5z" />
                         </svg>
                         Konversi ke JSON
                     </button>
@@ -128,17 +128,31 @@
             <div class="card output-container" id="sankey-chart-container" hidden>
             </div>
 
-            <div class="card output-container" hidden>
-                <div class="slider-container">
-                    <label><strong>Distribusi Persen ke Harvest:</strong> <span
-                            id="slider-harvest-label-tab3">50</span>%</label>
-                    <label><strong>ke Import:</strong> <span id="slider-import-label-tab3">50</span>%</label>
-                    <input type="range" min="0" max="100" value="50" id="harvestSliderTab3">
+            <div class="card output-container" id="adjustment-controls" hidden>
+                <div class="adjustment-sliders">
+                    <div class="slider-container">
+                        <label><strong>Distribusi Input:</strong> Harvest <span
+                                id="slider-harvest-label-tab3">50</span>% | Import <span
+                                id="slider-import-label-tab3">50</span>%</label>
+                        <input type="range" min="0" max="100" value="50" id="harvestSliderTab3" class="slider-tab3">
+                    </div>
+                    <div class="slider-container">
+                        <label><strong>Distribusi Alokasi:</strong> Enjoy <span id="slider-enjoy-label-tab3">50</span>%
+                            | Excess <span id="slider-excess-label-tab3">50</span>%</label>
+                        <input type="range" min="0" max="100" value="50" id="enjoySliderTab3" class="slider-tab3">
+                    </div>
+                    <div class="slider-container">
+                        <label><strong>Distribusi Excess:</strong> Excess <span
+                                id="slider-export-label-tab3">100</span>% | Store <span
+                                id="slider-store-label-tab3">0</span>%</label>
+                        <input type="range" min="0" max="100" value="100" id="exportStoreSliderTab3"
+                            class="slider-tab3">
+                    </div>
                 </div>
                 <div class="table-wrapper" id="comprehensiveTableContainerTab3"></div>
             </div>
 
-            <div class="card output-container" hidden>
+            <div class="card output-container" id="json-output-container" hidden>
                 <details open>
                     <summary><strong>Hasil JSON yang Disesuaikan</strong></summary>
                     <div class="json-output-mode">
