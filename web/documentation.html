@@ -48,14 +48,15 @@
                 <p class="muted">API ini menyediakan dua layanan utama untuk mengelola data proyek dan file JSON
                     terkait.</p>
                 <div class="row">
-                    <div class="chip"><span class="method GET">GET</span> <code>/api/json?file={path}</code> <span
-                            class="muted">Ambil JSON</span></div>
-                    <div class="chip"><span class="method POST">POST</span> <code>/api/json?file={path}</code> <span
-                            class="muted">Timpa JSON</span></div>
+                    <div class="chip"><span class="method GET">GET</span> <code>/api/{path}</code> <span
+                            class="muted"><strong>Ambil JSON</strong></span></div>
+                    <div class="chip"><span class="method POST">POST</span> <code>/api/{path}</code> <span
+                            class="muted"><strong>Timpa JSON</strong></span></div>
                     <div class="chip"><span class="method POST">POST</span> <code>/api/project</code> <span
-                            class="muted">Tambah/Update Project</span></div>
+                            class="muted"><strong>Tambah/Update Project</strong></span></div>
                     <div class="chip"><span class="method DELETE">DELETE</span> <code>/api/project?slug={slug}</code>
-                        <span class="muted">Hapus Project</span></div>
+                        <span class="muted"><strong>Hapus Project</strong></span>
+                    </div>
                 </div>
             </section>
 
@@ -97,13 +98,14 @@ X-API-Key: YOUR_API_KEY</code></pre>
                         <tbody>
                             <tr>
                                 <td><span class="method GET">GET</span></td>
-                                <td><code>/api/json?file={path}</code></td>
+                                <td><code>/api/{path}</code></td>
                                 <td>Mengambil konten mentah dari file JSON. Path bersifat relatif dari direktori
-                                    <code>/demo/</code>.</td>
+                                    <code>/demo/</code>.
+                                </td>
                             </tr>
                             <tr>
                                 <td><span class="method POST">POST</span></td>
-                                <td><code>/api/json?file={path}</code></td>
+                                <td><code>/api/{path}</code></td>
                                 <td>Menimpa (overwrite) seluruh konten file JSON yang dituju dengan data dari body.</td>
                             </tr>
                         </tbody>
@@ -131,7 +133,7 @@ X-API-Key: YOUR_API_KEY</code></pre>
                             <tr>
                                 <td><span class="method DELETE">DELETE</span></td>
                                 <td><code>/api/project?slug={slug}</code></td>
-                                <td>Menghapus entri proyek dari <code>sidebar.json</code> dan juga menghapus direktori
+                                <td>Menghapus entri proyek dari <code>sidebar</code> dan juga menghapus direktori
                                     fisik terkait.</td>
                             </tr>
                         </tbody>
@@ -143,7 +145,7 @@ X-API-Key: YOUR_API_KEY</code></pre>
                 <h2>Data Schemas</h2>
                 <p class="muted">Struktur data utama yang digunakan dalam API.</p>
                 <details>
-                    <summary>Tampilkan Skema <code>sidebar.json</code></summary>
+                    <summary>Tampilkan Skema <code>sidebar</code></summary>
                     <pre><code>{
   "success": true,
   "data": {
@@ -185,7 +187,7 @@ X-API-Key: YOUR_API_KEY</code></pre>
                     <summary>
                         <span class="method GET">GET</span>
                         <strong>Mengambil Konfigurasi Sidebar</strong>
-                        <code>/api/json?file=sidebar.json</code>
+                        <code>/api/sidebar</code>
                     </summary>
                     <div class="details-content">
                         <p class="muted">Request untuk melihat data semua customer dan proyek yang ada saat ini.</p>
@@ -304,10 +306,10 @@ X-API-Key: YOUR_API_KEY</code></pre>
                     <summary>
                         <span class="method POST">POST</span>
                         <strong>Menimpa File Sidebar</strong>
-                        <code>/api/json?file=sidebar.json</code>
+                        <code>/api/sidebar</code>
                     </summary>
                     <div class="details-content">
-                        <p class="muted">Mengganti seluruh konten `sidebar.json`. Gunakan dengan hati-hati.</p>
+                        <p class="muted">Mengganti seluruh konten `sidebar`. Gunakan dengan hati-hati.</p>
                         <details>
                             <summary>Request Headers</summary>
                             <pre><code>Content-Type: application/json
@@ -384,7 +386,7 @@ X-API-Key: YOUR_API_KEY</code></pre>
                     <li><b>Path Relatif:</b> Semua path file yang digunakan di parameter <code>file</code> adalah
                         relatif terhadap direktori <code>/api/demo/</code> di server.</li>
                     <li><b>Kloning:</b> Properti <code>clone_from</code> hanya digunakan saat proses penambahan proyek
-                        dan tidak disimpan di `sidebar.json`.</li>
+                        dan tidak disimpan di `sidebar`.</li>
                     <li><b>URL Encoding:</b> Gunakan <code>%23</code> untuk karakter <code>#</code> jika dikirim via
                         query URL (misal: <code>?project_id=PR%23101</code>).</li>
                 </ul>
